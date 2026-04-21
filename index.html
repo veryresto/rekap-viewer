@@ -203,6 +203,36 @@
       box-shadow: 3px 0 8px -2px rgba(0,0,0,0.18);
     }
 
+    /* ── Collapsible identity columns ────────────────────────── */
+    .col-hidden { display: none; }
+
+    /* Toggle button sits inside the Nomor <th> */
+    .col-toggle-btn {
+      position: absolute;
+      right: 2px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255,255,255,0.18);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.32);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 9px;
+      font-family: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      line-height: 1.6;
+      letter-spacing: 0.02em;
+      transition: background 0.15s;
+      white-space: nowrap;
+      user-select: none;
+    }
+    .col-toggle-btn:hover  { background: rgba(255,255,255,0.32); }
+    .col-toggle-btn:active { background: rgba(255,255,255,0.45); }
+
+    /* Extra right padding on Nomor <th> to give room for the button */
+    thead th.has-toggle { padding-right: 28px; }
+
     /* ── Mobile ───────────────────────────────────────────────── */
     @media (max-width: 600px) {
       .app-header { padding: 10px 14px; }
@@ -255,6 +285,10 @@
   const theadEl     = document.getElementById("thead");
   const tbodyEl     = document.getElementById("tbody");
   const rowCountEl  = document.getElementById("row-count");
+
+  // ── COLLAPSIBLE STATE ─────────────────────────────────────────────────────
+  let isCollapsed = false;
+  let toggleBtn   = null;
 
   // ── HELPERS ──────────────────────────────────────────────────────────────
 
@@ -324,6 +358,46 @@
     }
   }
 
+  // ── COLLAPSE / EXPAND IDENTITY COLUMNS ───────────────────────────────────
+
+  function collapseIdentityCols() {
+    const n = CONFIG.STICKY_COLUMNS;
+    // Hide all sticky columns except the last (Nomor)
+    for (let i = 0; i < n - 1; i++) {
+      document.querySelectorAll(
+        `#rekap-table th:nth-child(${i + 1}), #rekap-table td:nth-child(${i + 1})`
+      ).forEach(el => el.classList.add("col-hidden"));
+    }
+    // Slide Nomor to the left edge
+    document.querySelectorAll(
+      `#rekap-table th:nth-child(${n}), #rekap-table td:nth-child(${n})`
+    ).forEach(el => el.style.left = "0px");
+    isCollapsed = true;
+    if (toggleBtn) {
+      toggleBtn.textContent = "▶";
+      toggleBtn.title = "Tampilkan RT, Blok, Nama";
+      toggleBtn.setAttribute("aria-label", "Tampilkan kolom identitas");
+    }
+  }
+
+  function expandIdentityCols() {
+    const n = CONFIG.STICKY_COLUMNS;
+    // Restore hidden columns
+    for (let i = 0; i < n - 1; i++) {
+      document.querySelectorAll(
+        `#rekap-table th:nth-child(${i + 1}), #rekap-table td:nth-child(${i + 1})`
+      ).forEach(el => el.classList.remove("col-hidden"));
+    }
+    // Re-measure and re-pin all sticky columns after cells become visible
+    requestAnimationFrame(() => applyStickyColumns());
+    isCollapsed = false;
+    if (toggleBtn) {
+      toggleBtn.textContent = "◀";
+      toggleBtn.title = "Sembunyikan RT, Blok, Nama";
+      toggleBtn.setAttribute("aria-label", "Sembunyikan kolom identitas");
+    }
+  }
+
   // ── RENDER ───────────────────────────────────────────────────────────────
 
   function render(rows) {
@@ -340,6 +414,20 @@
       th.textContent = cellDisplay(cell);
       theadRow.appendChild(th);
     });
+    // Inject ◀/▶ toggle button into the last sticky column header (Nomor)
+    if (CONFIG.STICKY_COLUMNS > 1) {
+      const lastStickyTh = theadRow.children[CONFIG.STICKY_COLUMNS - 1];
+      lastStickyTh.classList.add("has-toggle"); // adds right padding
+      toggleBtn = document.createElement("button");
+      toggleBtn.className  = "col-toggle-btn";
+      toggleBtn.textContent = "◀";
+      toggleBtn.title      = "Sembunyikan RT, Blok, Nama";
+      toggleBtn.setAttribute("aria-label", "Sembunyikan kolom identitas");
+      toggleBtn.addEventListener("click", () =>
+        isCollapsed ? expandIdentityCols() : collapseIdentityCols()
+      );
+      lastStickyTh.appendChild(toggleBtn);
+    }
     theadEl.appendChild(theadRow);
 
     // rows[1..n] are data rows
@@ -358,8 +446,12 @@
     containerEl.classList.add("visible");
     rowCountEl.textContent = (rows.length - 1) + " warga";
 
-    // Apply sticky after the browser has computed layout
-    requestAnimationFrame(() => applyStickyColumns());
+    // Apply sticky after the browser has computed layout;
+    // then auto-collapse identity columns on narrow screens.
+    requestAnimationFrame(() => {
+      applyStickyColumns();
+      if (window.innerWidth < 640) collapseIdentityCols();
+    });
   }
 
   // ── FETCH & PARSE ────────────────────────────────────────────────────────
