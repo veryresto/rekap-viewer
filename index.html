@@ -34,10 +34,7 @@
       --radius:      10px;
     }
 
-    html, body {
-      height: 100%;
-      overflow: hidden;
-    }
+    html, body { height: 100%; overflow: hidden; }
 
     body {
       font-family: 'Inter', sans-serif;
@@ -74,12 +71,7 @@
       margin-top: 2px;
     }
 
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-shrink: 0;
-    }
+    .header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
     .badge {
       font-size: 0.7rem;
@@ -91,7 +83,7 @@
       white-space: nowrap;
     }
 
-    /* ── Main ────────────────────────────────────────────────── */
+    /* ── Main layout ─────────────────────────────────────────── */
     .main {
       flex: 1;
       overflow: hidden;
@@ -128,7 +120,6 @@
       font-weight: 500;
     }
 
-    /* Spinner */
     .spinner {
       width: 18px;
       height: 18px;
@@ -141,6 +132,52 @@
 
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* ── Filter Bar ──────────────────────────────────────────── */
+    .filter-bar {
+      flex-shrink: 0;
+      display: none;           /* revealed after data loads */
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      flex-wrap: wrap;
+    }
+
+    .filter-bar.visible { display: flex; }
+
+    .filter-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .chip-group { display: flex; flex-wrap: wrap; gap: 6px; }
+
+    .chip {
+      font-family: inherit;
+      font-size: 0.75rem;
+      font-weight: 500;
+      padding: 4px 13px;
+      border-radius: 999px;
+      border: 1.5px solid var(--border);
+      background: var(--bg);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: background 0.13s, border-color 0.13s, color 0.13s;
+      white-space: nowrap;
+      line-height: 1.5;
+    }
+
+    .chip:hover               { border-color: var(--accent); color: var(--accent); background: #eff6ff; }
+    .chip.active              { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+    .chip.chip-all.active     { background: var(--th-bg); border-color: var(--th-bg); }
+
     /* ── Table Container ─────────────────────────────────────── */
     .table-container {
       flex: 1;
@@ -151,7 +188,6 @@
       box-shadow: var(--shadow);
       background: var(--surface);
       display: none;
-      /* smooth momentum scroll on iOS */
       -webkit-overflow-scrolling: touch;
     }
 
@@ -174,7 +210,6 @@
       text-align: center;
     }
 
-    /* Header row */
     thead th {
       background: var(--th-bg);
       color: var(--th-text);
@@ -187,51 +222,21 @@
       border-bottom: 2px solid rgba(255,255,255,0.15);
     }
 
-    /* Data rows */
     tbody tr:nth-child(even) td { background: var(--row-even); }
     tbody tr:hover td           { background: var(--row-hover); }
 
-    /* ── Sticky Column Classes (background overrides) ────────── */
-    /* These are applied via JS: classList.add('sticky-col') */
-    td.sticky-col               { background: var(--sticky-bg); text-align: left; font-weight: 500; }
-    tbody tr:nth-child(even) td.sticky-col  { background: var(--sticky-even); }
-    tbody tr:hover td.sticky-col            { background: var(--sticky-hover); }
-    thead th.sticky-col         { background: var(--sticky-th-bg); text-align: left; }
+    /* Sticky column backgrounds (set via JS class, not inline style) */
+    td.sticky-col                          { background: var(--sticky-bg); text-align: left; font-weight: 500; }
+    tbody tr:nth-child(even) td.sticky-col { background: var(--sticky-even); }
+    tbody tr:hover td.sticky-col           { background: var(--sticky-hover); }
+    thead th.sticky-col                    { background: var(--sticky-th-bg); text-align: left; }
 
-    /* Shadow on the last sticky column to mark the frozen boundary */
-    .sticky-last {
-      box-shadow: 3px 0 8px -2px rgba(0,0,0,0.18);
-    }
+    /* Right-edge shadow on the last frozen column */
+    .sticky-last { box-shadow: 3px 0 8px -2px rgba(0,0,0,0.18); }
 
-    /* ── Collapsible identity columns ────────────────────────── */
+    /* Row / column visibility */
+    .row-hidden { display: none; }
     .col-hidden { display: none; }
-
-    /* Toggle button sits inside the Nomor <th> */
-    .col-toggle-btn {
-      position: absolute;
-      right: 2px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: rgba(255,255,255,0.18);
-      color: #fff;
-      border: 1px solid rgba(255,255,255,0.32);
-      border-radius: 4px;
-      padding: 2px 6px;
-      font-size: 9px;
-      font-family: inherit;
-      font-weight: 700;
-      cursor: pointer;
-      line-height: 1.6;
-      letter-spacing: 0.02em;
-      transition: background 0.15s;
-      white-space: nowrap;
-      user-select: none;
-    }
-    .col-toggle-btn:hover  { background: rgba(255,255,255,0.32); }
-    .col-toggle-btn:active { background: rgba(255,255,255,0.45); }
-
-    /* Extra right padding on Nomor <th> to give room for the button */
-    thead th.has-toggle { padding-right: 28px; }
 
     /* ── Mobile ───────────────────────────────────────────────── */
     @media (max-width: 600px) {
@@ -254,9 +259,15 @@
 </header>
 
 <main class="main" role="main">
+
   <div id="status" class="loading" aria-live="polite">
     <div class="spinner" aria-hidden="true"></div>
     <span>Mengambil data dari Google Sheets…</span>
+  </div>
+
+  <div class="filter-bar" id="filter-bar" role="search" aria-label="Filter berdasarkan Blok">
+    <span class="filter-label">Filter Blok</span>
+    <div class="chip-group" id="blok-chips"></div>
   </div>
 
   <div class="table-container" id="table-container">
@@ -265,38 +276,37 @@
       <tbody id="tbody"></tbody>
     </table>
   </div>
+
 </main>
 
 <script>
   "use strict";
 
   // ── CONFIG ────────────────────────────────────────────────────────────────
-  // STICKY_COLUMNS: number of left columns to freeze during horizontal scroll.
-  // Adjust this on mobile if fewer columns are desired.
   const CONFIG = {
-    SHEET_ID:       "1xWE0qBxz69geRURuuGqNUHA2Ro78mg1ZOhCVU0Nqca4",
-    SHEET_NAME:     "Import",
-    STICKY_COLUMNS: 4   // RT, Blok, Nama, Nomor
+    SHEET_ID:   "1xWE0qBxz69geRURuuGqNUHA2Ro78mg1ZOhCVU0Nqca4",
+    SHEET_NAME: "Import",
+    SKIP_COL:   0,     // RT — never rendered (low value)
+    BLOK_COL:   1,     // Blok — shown only when 2+ Bloks selected in filter
+    // Sticky columns by original data-index, in left-to-right order.
+    // Blok(1) is included; applyStickyColumns() respects its current visibility.
+    STICKY_DATA_COLS: [1, 2, 3]   // Blok, Nama, Nomor
   };
 
   // ── ELEMENT REFS ─────────────────────────────────────────────────────────
   const statusEl    = document.getElementById("status");
+  const filterBarEl = document.getElementById("filter-bar");
+  const chipGroupEl = document.getElementById("blok-chips");
   const containerEl = document.getElementById("table-container");
   const theadEl     = document.getElementById("thead");
   const tbodyEl     = document.getElementById("tbody");
   const rowCountEl  = document.getElementById("row-count");
 
-  // ── COLLAPSIBLE STATE ─────────────────────────────────────────────────────
-  let isCollapsed = false;
-  let toggleBtn   = null;
-
   // ── HELPERS ──────────────────────────────────────────────────────────────
 
   /**
-   * Returns the best human-readable string for a GViz cell object.
-   *  - Prefers cell.f (formatted) when present — e.g. "Jan-24", "4/1/2024"
-   *  - Falls back to cell.v as a string
-   *  - Returns "" for null / undefined / {v: null}
+   * Returns the best displayable string for a GViz cell object.
+   * Preference: cell.f (formatted) → cell.v → ""
    */
   function cellDisplay(cell) {
     if (cell === null || cell === undefined) return "";
@@ -307,95 +317,158 @@
 
   function showLoading() {
     statusEl.className = "loading";
-    statusEl.innerHTML = '<div class="spinner" aria-hidden="true"></div><span>Mengambil data dari Google Sheets…</span>';
+    statusEl.innerHTML =
+      '<div class="spinner" aria-hidden="true"></div>' +
+      '<span>Mengambil data dari Google Sheets…</span>';
     statusEl.style.display = "";
   }
 
-  function hideLoading() {
-    statusEl.style.display = "none";
-  }
+  function hideLoading() { statusEl.style.display = "none"; }
 
   function showError(msg) {
-    statusEl.className = "error";
-    statusEl.textContent = "⚠️ " + msg;
+    statusEl.className    = "error";
+    statusEl.textContent  = "⚠️ " + msg;
     statusEl.style.display = "block";
     rowCountEl.textContent = "Error";
   }
 
   // ── STICKY COLUMNS ───────────────────────────────────────────────────────
+  // Identifies sticky columns by `data-col` attribute (original data index).
+  // Must be called (via rAF) whenever sticky column visibility changes.
 
   function applyStickyColumns() {
-    const n = CONFIG.STICKY_COLUMNS;
-    const ths = Array.from(document.querySelectorAll("#thead th"));
-    if (ths.length < n) return;
+    // 1. Clear previous sticky state entirely
+    document.querySelectorAll(".sticky-col").forEach(el => {
+      el.classList.remove("sticky-col", "sticky-last");
+      el.style.position = "";
+      el.style.left     = "";
+      el.style.zIndex   = "";
+    });
 
-    // Measure widths after layout paint
-    const widths = ths.slice(0, n).map(th => th.getBoundingClientRect().width);
+    // 2. Determine which of the configured sticky columns are currently visible
+    const visibleSticky = CONFIG.STICKY_DATA_COLS.filter(colIdx => {
+      const th = document.querySelector(`#thead [data-col="${colIdx}"]`);
+      return th && !th.classList.contains("col-hidden");
+    });
 
+    // 3. Apply sticky left-to-right, accumulating offsets
     let leftPx = 0;
-    for (let i = 0; i < n; i++) {
-      const isLast = i === n - 1;
-      const colSelector = `#rekap-table th:nth-child(${i + 1}),
-                           #rekap-table td:nth-child(${i + 1})`;
+    visibleSticky.forEach((colIdx, i) => {
+      const isLast = i === visibleSticky.length - 1;
+      const th = document.querySelector(`#thead [data-col="${colIdx}"]`);
+      if (!th) return;
+      const width = th.getBoundingClientRect().width;
 
-      document.querySelectorAll(colSelector).forEach(el => {
+      document.querySelectorAll(`[data-col="${colIdx}"]`).forEach(el => {
         el.style.position = "sticky";
-        el.style.left = leftPx + "px";
+        el.style.left     = leftPx + "px";
         el.classList.add("sticky-col");
         if (isLast) el.classList.add("sticky-last");
       });
 
-      // Corner cells: sticky column + sticky header → highest z-index
-      document.querySelectorAll(`#thead th:nth-child(${i + 1})`).forEach(el => {
-        el.style.zIndex = isLast ? "6" : "5";
-      });
-      // Non-header sticky cells sit behind the header
-      document.querySelectorAll(`#tbody td:nth-child(${i + 1})`).forEach(el => {
-        el.style.zIndex = "2";
-      });
+      // Header corner cells need highest z-index to sit above body sticky cells
+      document.querySelectorAll(`#thead [data-col="${colIdx}"]`)
+        .forEach(el => { el.style.zIndex = isLast ? "6" : "5"; });
+      document.querySelectorAll(`#tbody [data-col="${colIdx}"]`)
+        .forEach(el => { el.style.zIndex = "2"; });
 
-      leftPx += widths[i];
-    }
+      leftPx += width;
+    });
   }
 
-  // ── COLLAPSE / EXPAND IDENTITY COLUMNS ───────────────────────────────────
+  // ── BLOK COLUMN VISIBILITY ────────────────────────────────────────────────
 
-  function collapseIdentityCols() {
-    const n = CONFIG.STICKY_COLUMNS;
-    // Hide all sticky columns except the last (Nomor)
-    for (let i = 0; i < n - 1; i++) {
-      document.querySelectorAll(
-        `#rekap-table th:nth-child(${i + 1}), #rekap-table td:nth-child(${i + 1})`
-      ).forEach(el => el.classList.add("col-hidden"));
-    }
-    // Slide Nomor to the left edge
-    document.querySelectorAll(
-      `#rekap-table th:nth-child(${n}), #rekap-table td:nth-child(${n})`
-    ).forEach(el => el.style.left = "0px");
-    isCollapsed = true;
-    if (toggleBtn) {
-      toggleBtn.textContent = "▶";
-      toggleBtn.title = "Tampilkan RT, Blok, Nama";
-      toggleBtn.setAttribute("aria-label", "Tampilkan kolom identitas");
-    }
+  function setBlokColVisible(visible) {
+    document.querySelectorAll(`[data-col="${CONFIG.BLOK_COL}"]`)
+      .forEach(el => el.classList.toggle("col-hidden", !visible));
   }
 
-  function expandIdentityCols() {
-    const n = CONFIG.STICKY_COLUMNS;
-    // Restore hidden columns
-    for (let i = 0; i < n - 1; i++) {
-      document.querySelectorAll(
-        `#rekap-table th:nth-child(${i + 1}), #rekap-table td:nth-child(${i + 1})`
-      ).forEach(el => el.classList.remove("col-hidden"));
-    }
-    // Re-measure and re-pin all sticky columns after cells become visible
+  // ── FILTER ───────────────────────────────────────────────────────────────
+
+  function applyFilter() {
+    const activeChips  = [...chipGroupEl.querySelectorAll(".chip:not(.chip-all).active")];
+    const isSemua      = activeChips.length === 0;
+    const selectedBloks = new Set(activeChips.map(c => c.dataset.blok));
+
+    // Hide/show rows
+    let visibleCount = 0;
+    document.querySelectorAll("#tbody tr").forEach(tr => {
+      const blokCell = tr.querySelector(`[data-col="${CONFIG.BLOK_COL}"]`);
+      const blokVal  = blokCell ? blokCell.textContent.trim() : "";
+      const show     = isSemua || selectedBloks.has(blokVal);
+      tr.classList.toggle("row-hidden", !show);
+      if (show) visibleCount++;
+    });
+
+    // Blok column: only useful when viewer needs to distinguish 2+ blocks
+    setBlokColVisible(activeChips.length > 1);
+
+    // Re-pin sticky columns (offsets may change with Blok col toggling)
     requestAnimationFrame(() => applyStickyColumns());
-    isCollapsed = false;
-    if (toggleBtn) {
-      toggleBtn.textContent = "◀";
-      toggleBtn.title = "Sembunyikan RT, Blok, Nama";
-      toggleBtn.setAttribute("aria-label", "Sembunyikan kolom identitas");
-    }
+
+    rowCountEl.textContent = visibleCount + " warga";
+  }
+
+  function buildFilterChips(rows) {
+    // Collect unique Blok values from data rows (rows[1..n])
+    const blokSet = new Set();
+    rows.slice(1).forEach(row => {
+      const val = cellDisplay(row.c[CONFIG.BLOK_COL]);
+      if (val) blokSet.add(val);
+    });
+    const bloks = [...blokSet].sort();
+
+    // "Semua" chip — starts active
+    const allChip = document.createElement("button");
+    allChip.className    = "chip chip-all active";
+    allChip.textContent  = "Semua";
+    allChip.dataset.blok = "";
+    allChip.setAttribute("aria-pressed", "true");
+    chipGroupEl.appendChild(allChip);
+
+    bloks.forEach(blok => {
+      const chip = document.createElement("button");
+      chip.className    = "chip";
+      chip.textContent  = blok;
+      chip.dataset.blok = blok;
+      chip.setAttribute("aria-pressed", "false");
+      chipGroupEl.appendChild(chip);
+    });
+
+    filterBarEl.classList.add("visible");
+
+    // Single delegated listener on the chip group
+    chipGroupEl.addEventListener("click", e => {
+      const chip = e.target.closest(".chip");
+      if (!chip) return;
+
+      if (chip.classList.contains("chip-all")) {
+        // Reset: deactivate all, activate Semua
+        chipGroupEl.querySelectorAll(".chip").forEach(c => {
+          c.classList.remove("active");
+          c.setAttribute("aria-pressed", "false");
+        });
+        chip.classList.add("active");
+        chip.setAttribute("aria-pressed", "true");
+      } else {
+        // Toggle this chip; deactivate Semua
+        chipGroupEl.querySelector(".chip-all").classList.remove("active");
+        chipGroupEl.querySelector(".chip-all").setAttribute("aria-pressed", "false");
+        chip.classList.toggle("active");
+        chip.setAttribute("aria-pressed", chip.classList.contains("active") ? "true" : "false");
+
+        // If nothing is active, fall back to Semua
+        const anyActive = [...chipGroupEl.querySelectorAll(".chip:not(.chip-all)")]
+          .some(c => c.classList.contains("active"));
+        if (!anyActive) {
+          const all = chipGroupEl.querySelector(".chip-all");
+          all.classList.add("active");
+          all.setAttribute("aria-pressed", "true");
+        }
+      }
+
+      applyFilter();
+    });
   }
 
   // ── RENDER ───────────────────────────────────────────────────────────────
@@ -406,37 +479,27 @@
       return;
     }
 
-    // rows[0] contains the actual column headers (GViz cols[].label are empty)
+    // rows[0] = header row (actual labels; GViz cols[].label are all empty)
     const headerCells = rows[0].c;
     const theadRow = document.createElement("tr");
-    headerCells.forEach(cell => {
+    headerCells.forEach((cell, i) => {
+      if (i === CONFIG.SKIP_COL) return; // skip RT entirely
       const th = document.createElement("th");
       th.textContent = cellDisplay(cell);
+      th.dataset.col = i;
       theadRow.appendChild(th);
     });
-    // Inject ◀/▶ toggle button into the last sticky column header (Nomor)
-    if (CONFIG.STICKY_COLUMNS > 1) {
-      const lastStickyTh = theadRow.children[CONFIG.STICKY_COLUMNS - 1];
-      lastStickyTh.classList.add("has-toggle"); // adds right padding
-      toggleBtn = document.createElement("button");
-      toggleBtn.className  = "col-toggle-btn";
-      toggleBtn.textContent = "◀";
-      toggleBtn.title      = "Sembunyikan RT, Blok, Nama";
-      toggleBtn.setAttribute("aria-label", "Sembunyikan kolom identitas");
-      toggleBtn.addEventListener("click", () =>
-        isCollapsed ? expandIdentityCols() : collapseIdentityCols()
-      );
-      lastStickyTh.appendChild(toggleBtn);
-    }
     theadEl.appendChild(theadRow);
 
-    // rows[1..n] are data rows
+    // rows[1..n] = data rows
     const fragment = document.createDocumentFragment();
     rows.slice(1).forEach(row => {
       const tr = document.createElement("tr");
-      row.c.forEach(cell => {
+      row.c.forEach((cell, i) => {
+        if (i === CONFIG.SKIP_COL) return; // skip RT
         const td = document.createElement("td");
         td.textContent = cellDisplay(cell);
+        td.dataset.col = i;
         tr.appendChild(td);
       });
       fragment.appendChild(tr);
@@ -446,11 +509,13 @@
     containerEl.classList.add("visible");
     rowCountEl.textContent = (rows.length - 1) + " warga";
 
-    // Apply sticky after the browser has computed layout;
-    // then auto-collapse identity columns on narrow screens.
+    // Build filter chips (auto-populates from data)
+    buildFilterChips(rows);
+
+    // Initial state: Blok column hidden (Semua selected → only 1 blok would be redundant)
     requestAnimationFrame(() => {
+      setBlokColVisible(false);
       applyStickyColumns();
-      if (window.innerWidth < 640) collapseIdentityCols();
     });
   }
 
@@ -478,8 +543,7 @@
 
     let json;
     try {
-      // GViz wraps the response:  /*O_o*/\ngoogle.visualization.Query.setResponse({…});
-      // Use regex to reliably extract the JSON payload regardless of offset.
+      // GViz wraps: /*O_o*/\ngoogle.visualization.Query.setResponse({…});
       const match = text.match(/setResponse\((\{[\s\S]*\})\)/);
       if (!match) throw new Error("Unexpected response format");
       json = JSON.parse(match[1]);
