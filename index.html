@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rekap IPL Viewer</title>
+  <meta name="description" content="Tabel rekap pembayaran IPL warga, diambil langsung dari Google Sheets secara otomatis." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #f0f4f8;
+      --surface:     #ffffff;
+      --th-bg:       #1e3a5f;
+      --th-text:     #e2e8f0;
+      --border:      #d1d5db;
+      --row-even:    #f8fafc;
+      --row-hover:   #eff6ff;
+      --sticky-bg:   #f1f5f9;
+      --sticky-even: #e8eef5;
+      --sticky-hover:#dbeafe;
+      --sticky-th-bg:#162f4a;
+      --text:        #1e293b;
+      --text-muted:  #64748b;
+      --accent:      #3b82f6;
+      --error:       #ef4444;
+      --error-bg:    #fef2f2;
+      --shadow-sm:   0 1px 3px rgb(0 0 0 / .12);
+      --shadow:      0 4px 12px rgb(0 0 0 / .10);
+      --radius:      10px;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── App Header ──────────────────────────────────────────── */
+    .app-header {
+      flex-shrink: 0;
+      background: var(--th-bg);
+      color: var(--th-text);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      box-shadow: var(--shadow);
+      z-index: 50;
+    }
+
+    .app-header h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: #fff;
+    }
+
+    .app-header .subtitle {
+      font-size: 0.7rem;
+      color: #94a3b8;
+      margin-top: 2px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .badge {
+      font-size: 0.7rem;
+      background: var(--accent);
+      color: #fff;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    /* ── Main ────────────────────────────────────────────────── */
+    .main {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+      gap: 10px;
+      min-height: 0;
+    }
+
+    /* ── Status (loading / error) ────────────────────────────── */
+    #status {
+      display: none;
+      padding: 14px 16px;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+    }
+
+    #status.loading {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      box-shadow: var(--shadow-sm);
+    }
+
+    #status.error {
+      display: block;
+      background: var(--error-bg);
+      border: 1px solid #fca5a5;
+      color: var(--error);
+      font-weight: 500;
+    }
+
+    /* Spinner */
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Table Container ─────────────────────────────────────── */
+    .table-container {
+      flex: 1;
+      overflow: auto;
+      min-height: 0;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      background: var(--surface);
+      display: none;
+      /* smooth momentum scroll on iOS */
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .table-container.visible { display: block; }
+
+    /* ── Table ───────────────────────────────────────────────── */
+    table {
+      border-collapse: collapse;
+      width: max-content;
+      min-width: 100%;
+    }
+
+    th, td {
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 7px 11px;
+      white-space: nowrap;
+      font-size: clamp(11px, 1.5vw, 13px);
+      background: var(--surface);
+      text-align: center;
+    }
+
+    /* Header row */
+    thead th {
+      background: var(--th-bg);
+      color: var(--th-text);
+      font-weight: 600;
+      font-size: clamp(10px, 1.3vw, 12px);
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      letter-spacing: 0.03em;
+      border-bottom: 2px solid rgba(255,255,255,0.15);
+    }
+
+    /* Data rows */
+    tbody tr:nth-child(even) td { background: var(--row-even); }
+    tbody tr:hover td           { background: var(--row-hover); }
+
+    /* ── Sticky Column Classes (background overrides) ────────── */
+    /* These are applied via JS: classList.add('sticky-col') */
+    td.sticky-col               { background: var(--sticky-bg); text-align: left; font-weight: 500; }
+    tbody tr:nth-child(even) td.sticky-col  { background: var(--sticky-even); }
+    tbody tr:hover td.sticky-col            { background: var(--sticky-hover); }
+    thead th.sticky-col         { background: var(--sticky-th-bg); text-align: left; }
+
+    /* Shadow on the last sticky column to mark the frozen boundary */
+    .sticky-last {
+      box-shadow: 3px 0 8px -2px rgba(0,0,0,0.18);
+    }
+
+    /* ── Mobile ───────────────────────────────────────────────── */
+    @media (max-width: 600px) {
+      .app-header { padding: 10px 14px; }
+      .app-header h1 { font-size: 1rem; }
+      .main { padding: 8px; gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="app-header" role="banner">
+  <div>
+    <h1>📋 Rekap IPL</h1>
+    <div class="subtitle">Data langsung dari Google Sheets</div>
+  </div>
+  <div class="header-right">
+    <span class="badge" id="row-count">Memuat…</span>
+  </div>
+</header>
+
+<main class="main" role="main">
+  <div id="status" class="loading" aria-live="polite">
+    <div class="spinner" aria-hidden="true"></div>
+    <span>Mengambil data dari Google Sheets…</span>
+  </div>
+
+  <div class="table-container" id="table-container">
+    <table id="rekap-table" role="grid" aria-label="Tabel Rekap IPL">
+      <thead id="thead"></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</main>
+
+<script>
+  "use strict";
+
+  // ── CONFIG ────────────────────────────────────────────────────────────────
+  // STICKY_COLUMNS: number of left columns to freeze during horizontal scroll.
+  // Adjust this on mobile if fewer columns are desired.
+  const CONFIG = {
+    SHEET_ID:       "1xWE0qBxz69geRURuuGqNUHA2Ro78mg1ZOhCVU0Nqca4",
+    SHEET_NAME:     "Import",
+    STICKY_COLUMNS: 4   // RT, Blok, Nama, Nomor
+  };
+
+  // ── ELEMENT REFS ─────────────────────────────────────────────────────────
+  const statusEl    = document.getElementById("status");
+  const containerEl = document.getElementById("table-container");
+  const theadEl     = document.getElementById("thead");
+  const tbodyEl     = document.getElementById("tbody");
+  const rowCountEl  = document.getElementById("row-count");
+
+  // ── HELPERS ──────────────────────────────────────────────────────────────
+
+  /**
+   * Returns the best human-readable string for a GViz cell object.
+   *  - Prefers cell.f (formatted) when present — e.g. "Jan-24", "4/1/2024"
+   *  - Falls back to cell.v as a string
+   *  - Returns "" for null / undefined / {v: null}
+   */
+  function cellDisplay(cell) {
+    if (cell === null || cell === undefined) return "";
+    if (cell.f !== undefined && cell.f !== null) return String(cell.f);
+    if (cell.v === null || cell.v === undefined) return "";
+    return String(cell.v);
+  }
+
+  function showLoading() {
+    statusEl.className = "loading";
+    statusEl.innerHTML = '<div class="spinner" aria-hidden="true"></div><span>Mengambil data dari Google Sheets…</span>';
+    statusEl.style.display = "";
+  }
+
+  function hideLoading() {
+    statusEl.style.display = "none";
+  }
+
+  function showError(msg) {
+    statusEl.className = "error";
+    statusEl.textContent = "⚠️ " + msg;
+    statusEl.style.display = "block";
+    rowCountEl.textContent = "Error";
+  }
+
+  // ── STICKY COLUMNS ───────────────────────────────────────────────────────
+
+  function applyStickyColumns() {
+    const n = CONFIG.STICKY_COLUMNS;
+    const ths = Array.from(document.querySelectorAll("#thead th"));
+    if (ths.length < n) return;
+
+    // Measure widths after layout paint
+    const widths = ths.slice(0, n).map(th => th.getBoundingClientRect().width);
+
+    let leftPx = 0;
+    for (let i = 0; i < n; i++) {
+      const isLast = i === n - 1;
+      const colSelector = `#rekap-table th:nth-child(${i + 1}),
+                           #rekap-table td:nth-child(${i + 1})`;
+
+      document.querySelectorAll(colSelector).forEach(el => {
+        el.style.position = "sticky";
+        el.style.left = leftPx + "px";
+        el.classList.add("sticky-col");
+        if (isLast) el.classList.add("sticky-last");
+      });
+
+      // Corner cells: sticky column + sticky header → highest z-index
+      document.querySelectorAll(`#thead th:nth-child(${i + 1})`).forEach(el => {
+        el.style.zIndex = isLast ? "6" : "5";
+      });
+      // Non-header sticky cells sit behind the header
+      document.querySelectorAll(`#tbody td:nth-child(${i + 1})`).forEach(el => {
+        el.style.zIndex = "2";
+      });
+
+      leftPx += widths[i];
+    }
+  }
+
+  // ── RENDER ───────────────────────────────────────────────────────────────
+
+  function render(rows) {
+    if (!rows || rows.length === 0) {
+      showError("Data tidak tersedia.");
+      return;
+    }
+
+    // rows[0] contains the actual column headers (GViz cols[].label are empty)
+    const headerCells = rows[0].c;
+    const theadRow = document.createElement("tr");
+    headerCells.forEach(cell => {
+      const th = document.createElement("th");
+      th.textContent = cellDisplay(cell);
+      theadRow.appendChild(th);
+    });
+    theadEl.appendChild(theadRow);
+
+    // rows[1..n] are data rows
+    const fragment = document.createDocumentFragment();
+    rows.slice(1).forEach(row => {
+      const tr = document.createElement("tr");
+      row.c.forEach(cell => {
+        const td = document.createElement("td");
+        td.textContent = cellDisplay(cell);
+        tr.appendChild(td);
+      });
+      fragment.appendChild(tr);
+    });
+    tbodyEl.appendChild(fragment);
+
+    containerEl.classList.add("visible");
+    rowCountEl.textContent = (rows.length - 1) + " warga";
+
+    // Apply sticky after the browser has computed layout
+    requestAnimationFrame(() => applyStickyColumns());
+  }
+
+  // ── FETCH & PARSE ────────────────────────────────────────────────────────
+
+  async function loadData() {
+    showLoading();
+
+    const url =
+      "https://docs.google.com/spreadsheets/d/" +
+      CONFIG.SHEET_ID +
+      "/gviz/tq?tqx=out:json&sheet=" +
+      encodeURIComponent(CONFIG.SHEET_NAME);
+
+    let text;
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      text = await res.text();
+    } catch (err) {
+      showError("Gagal memuat data. Periksa koneksi internet Anda.");
+      console.error("[rekap] Fetch error:", err);
+      return;
+    }
+
+    let json;
+    try {
+      // GViz wraps the response:  /*O_o*/\ngoogle.visualization.Query.setResponse({…});
+      // Use regex to reliably extract the JSON payload regardless of offset.
+      const match = text.match(/setResponse\((\{[\s\S]*\})\)/);
+      if (!match) throw new Error("Unexpected response format");
+      json = JSON.parse(match[1]);
+      if (json.status !== "ok") throw new Error("GViz status: " + json.status);
+    } catch (err) {
+      showError("Gagal memproses data dari Google Sheets.");
+      console.error("[rekap] Parse error:", err);
+      return;
+    }
+
+    hideLoading();
+
+    try {
+      render(json.table.rows);
+    } catch (err) {
+      showError("Gagal merender tabel.");
+      console.error("[rekap] Render error:", err);
+    }
+  }
+
+  loadData();
+</script>
+
+</body>
+</html>
