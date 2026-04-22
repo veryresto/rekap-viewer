@@ -309,13 +309,11 @@
 
   // ── CONFIG ────────────────────────────────────────────────────────────────
   const CONFIG = {
-    SHEET_ID:   "1xWE0qBxz69geRURuuGqNUHA2Ro78mg1ZOhCVU0Nqca4",
+    SHEET_ID: "1xWE0qBxz69geRURuuGqNUHA2Ro78mg1ZOhCVU0Nqca4",
     SHEET_NAME: "Import",
-    SKIP_COL:   0,     // RT — never rendered (low value)
-    BLOK_COL:   1,     // Blok — shown only when 2+ Bloks selected in filter
-    // Sticky columns by original data-index, in left-to-right order.
-    // Blok(1) is included; applyStickyColumns() respects its current visibility.
-    STICKY_DATA_COLS: [1, 2, 3]   // Blok, Nama, Nomor
+    RANGE: "Import!A1:ZZ500",
+    STICKY_COLUMNS: [1, 2, 3], // Blok, Nama, Nomor
+    API_KEY: "YOUR_API_KEY_HERE"
   };
 
   // ── ELEMENT REFS ─────────────────────────────────────────────────────────
@@ -338,11 +336,12 @@
    * Returns the best displayable string for a GViz cell object.
    * Preference: cell.f (formatted) → cell.v → ""
    */
-  function cellDisplay(cell) {
-    if (cell === null || cell === undefined) return "";
-    if (cell.f !== undefined && cell.f !== null) return String(cell.f);
-    if (cell.v === null || cell.v === undefined) return "";
-    return String(cell.v);
+  function cellDisplay(val) {
+    if (val === null || val === undefined) return "";
+    let str = String(val).trim();
+    // spec rules
+    if (str === "√") return "✓";
+    return str;
   }
 
   function showLoading() {
@@ -376,7 +375,7 @@
     });
 
     // 2. Determine which of the configured sticky columns are currently visible
-    const visibleSticky = CONFIG.STICKY_DATA_COLS.filter(colIdx => {
+    const visibleSticky = CONFIG.STICKY_COLUMNS.filter(colIdx => {
       const th = document.querySelector(`#thead [data-col="${colIdx}"]`);
       return th && !th.classList.contains("col-hidden");
     });
@@ -416,7 +415,7 @@
       .forEach(el => el.classList.toggle("col-hidden", isCollapsed));
     // Blok (data-col 1): hidden when collapsed OR when filter doesn't need it
     const showBlok = blokShouldShow && !isCollapsed;
-    document.querySelectorAll(`[data-col="${CONFIG.BLOK_COL}"]`)
+    document.querySelectorAll(`[data-col="1"]`)
       .forEach(el => el.classList.toggle("col-hidden", !showBlok));
   }
 
@@ -454,7 +453,7 @@
     // Hide/show rows
     let visibleCount = 0;
     document.querySelectorAll("#tbody tr").forEach(tr => {
-      const blokCell = tr.querySelector(`[data-col="${CONFIG.BLOK_COL}"]`);
+      const blokCell = tr.querySelector(`[data-col="1"]`);
       const blokVal  = blokCell ? blokCell.textContent.trim() : "";
       const show     = isSemua || selectedBloks.has(blokVal);
       tr.classList.toggle("row-hidden", !show);
@@ -475,7 +474,7 @@
     // Collect unique Blok values from data rows (rows[1..n])
     const blokSet = new Set();
     rows.slice(1).forEach(row => {
-      const val = cellDisplay(row.c[CONFIG.BLOK_COL]);
+      const val = cellDisplay(row[1]);
       if (val) blokSet.add(val);
     });
     const bloks = [...blokSet].sort();
@@ -541,17 +540,18 @@
       return;
     }
 
-    // rows[0] = header row (actual labels; GViz cols[].label are all empty)
-    const headerCells = rows[0].c;
+    // rows[0] = header row
+    const headers = rows[0];
     const theadRow = document.createElement("tr");
-    headerCells.forEach((cell, i) => {
-      if (i === CONFIG.SKIP_COL) return; // skip RT entirely
+    headers.forEach((text, i) => {
+      if (i === 0) return; // skip index 0 (RT)
       const th = document.createElement("th");
-      th.textContent = cellDisplay(cell);
+      th.textContent = text;
       th.dataset.col = i;
       theadRow.appendChild(th);
     });
-    // Inject ◀/▶ toggle button into the Nomor <th> (data-col=3, always visible)
+
+    // Inject ◀/▶ toggle button into the Nomor <th> (data-col=3)
     const nomorTh = theadRow.querySelector(`[data-col="3"]`);
     if (nomorTh) {
       nomorTh.classList.add("has-toggle");
@@ -568,13 +568,21 @@
     theadEl.appendChild(theadRow);
 
     // rows[1..n] = data rows
+    const dataRows = rows.slice(1);
     const fragment = document.createDocumentFragment();
-    rows.slice(1).forEach(row => {
+    
+    dataRows.forEach(row => {
       const tr = document.createElement("tr");
-      row.c.forEach((cell, i) => {
-        if (i === CONFIG.SKIP_COL) return; // skip RT
+      // Normalize row length to match headers
+      const normalizedRow = [...row];
+      while (normalizedRow.length < headers.length) {
+        normalizedRow.push("");
+      }
+
+      normalizedRow.forEach((val, i) => {
+        if (i === 0) return; // skip index 0 (RT)
         const td = document.createElement("td");
-        td.textContent = cellDisplay(cell);
+        td.textContent = cellDisplay(val);
         td.dataset.col = i;
         tr.appendChild(td);
       });
@@ -602,43 +610,28 @@
   async function loadData() {
     showLoading();
 
-    const url =
-      "https://docs.google.com/spreadsheets/d/" +
-      CONFIG.SHEET_ID +
-      "/gviz/tq?tqx=out:json&sheet=" +
-      encodeURIComponent(CONFIG.SHEET_NAME);
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${encodeURIComponent(CONFIG.RANGE)}?valueRenderOption=FORMATTED_VALUE&dateTimeRenderOption=FORMATTED_STRING&key=${CONFIG.API_KEY}`;
 
-    let text;
     try {
       const res = await fetch(url);
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      text = await res.text();
-    } catch (err) {
-      showError("Gagal memuat data. Periksa koneksi internet Anda.");
-      console.error("[rekap] Fetch error:", err);
-      return;
-    }
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData?.error?.message || "HTTP " + res.status);
+      }
+      const data = await res.json();
+      
+      hideLoading();
 
-    let json;
-    try {
-      // GViz wraps: /*O_o*/\ngoogle.visualization.Query.setResponse({…});
-      const match = text.match(/setResponse\((\{[\s\S]*\})\)/);
-      if (!match) throw new Error("Unexpected response format");
-      json = JSON.parse(match[1]);
-      if (json.status !== "ok") throw new Error("GViz status: " + json.status);
-    } catch (err) {
-      showError("Gagal memproses data dari Google Sheets.");
-      console.error("[rekap] Parse error:", err);
-      return;
-    }
+      if (!data.values || data.values.length === 0) {
+        showError("Data tidak tersedia atau sheet kosong.");
+        return;
+      }
 
-    hideLoading();
-
-    try {
-      render(json.table.rows);
+      render(data.values);
     } catch (err) {
-      showError("Gagal merender tabel.");
-      console.error("[rekap] Render error:", err);
+      hideLoading();
+      showError("Gagal memuat data: " + err.message);
+      console.error("[rekap] Load error:", err);
     }
   }
 
