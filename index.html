@@ -1,40 +1,52 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Rekap IPL Viewer</title>
-  <meta name="description" content="Tabel rekap pembayaran IPL warga, diambil langsung dari Google Sheets secara otomatis." />
+  <meta name="description"
+    content="Tabel rekap pembayaran IPL warga, diambil langsung dari Google Sheets secara otomatis." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg:          #f0f4f8;
-      --surface:     #ffffff;
-      --th-bg:       #1e3a5f;
-      --th-text:     #e2e8f0;
-      --border:      #d1d5db;
-      --row-even:    #f8fafc;
-      --row-hover:   #eff6ff;
-      --sticky-bg:   #f1f5f9;
-      --sticky-even: #e8eef5;
-      --sticky-hover:#dbeafe;
-      --sticky-th-bg:#162f4a;
-      --text:        #1e293b;
-      --text-muted:  #64748b;
-      --accent:      #3b82f6;
-      --error:       #ef4444;
-      --error-bg:    #fef2f2;
-      --shadow-sm:   0 1px 3px rgb(0 0 0 / .12);
-      --shadow:      0 4px 12px rgb(0 0 0 / .10);
-      --radius:      10px;
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
-    html, body { height: 100%; overflow: hidden; }
+    :root {
+      --bg: #f0f4f8;
+      --surface: #ffffff;
+      --th-bg: #1e3a5f;
+      --th-text: #e2e8f0;
+      --border: #d1d5db;
+      --row-even: #f8fafc;
+      --row-hover: #eff6ff;
+      --sticky-bg: #f1f5f9;
+      --sticky-even: #e8eef5;
+      --sticky-hover: #dbeafe;
+      --sticky-th-bg: #162f4a;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --accent: #3b82f6;
+      --error: #ef4444;
+      --error-bg: #fef2f2;
+      --shadow-sm: 0 1px 3px rgb(0 0 0 / .12);
+      --shadow: 0 4px 12px rgb(0 0 0 / .10);
+      --radius: 10px;
+    }
+
+    html,
+    body {
+      height: 100%;
+      overflow: hidden;
+    }
 
     body {
       font-family: 'Inter', sans-serif;
@@ -71,7 +83,12 @@
       margin-top: 2px;
     }
 
-    .header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
 
     .badge {
       font-size: 0.7rem;
@@ -130,12 +147,17 @@
       flex-shrink: 0;
     }
 
-    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
 
     /* ── Filter Bar ──────────────────────────────────────────── */
     .filter-bar {
       flex-shrink: 0;
-      display: none;           /* revealed after data loads */
+      display: none;
+      /* revealed after data loads */
       align-items: center;
       gap: 10px;
       padding: 8px 14px;
@@ -146,7 +168,9 @@
       flex-wrap: wrap;
     }
 
-    .filter-bar.visible { display: flex; }
+    .filter-bar.visible {
+      display: flex;
+    }
 
     .filter-label {
       font-size: 0.68rem;
@@ -157,7 +181,11 @@
       white-space: nowrap;
     }
 
-    .chip-group { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
 
     .chip {
       font-family: inherit;
@@ -174,9 +202,23 @@
       line-height: 1.5;
     }
 
-    .chip:hover               { border-color: var(--accent); color: var(--accent); background: #eff6ff; }
-    .chip.active              { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
-    .chip.chip-all.active     { background: var(--th-bg); border-color: var(--th-bg); }
+    .chip:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: #eff6ff;
+    }
+
+    .chip.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .chip.chip-all.active {
+      background: var(--th-bg);
+      border-color: var(--th-bg);
+    }
 
     /* ── Table Container ─────────────────────────────────────── */
     .table-container {
@@ -191,7 +233,9 @@
       -webkit-overflow-scrolling: touch;
     }
 
-    .table-container.visible { display: block; }
+    .table-container.visible {
+      display: block;
+    }
 
     /* ── Table ───────────────────────────────────────────────── */
     table {
@@ -200,7 +244,8 @@
       min-width: 100%;
     }
 
-    th, td {
+    th,
+    td {
       border-right: 1px solid var(--border);
       border-bottom: 1px solid var(--border);
       padding: 7px 11px;
@@ -219,20 +264,41 @@
       top: 0;
       z-index: 3;
       letter-spacing: 0.03em;
-      border-bottom: 2px solid rgba(255,255,255,0.15);
+      border-bottom: 2px solid rgba(255, 255, 255, 0.15);
     }
 
-    tbody tr:nth-child(even) td { background: var(--row-even); }
-    tbody tr:hover td           { background: var(--row-hover); }
+    tbody tr:nth-child(even) td {
+      background: var(--row-even);
+    }
+
+    tbody tr:hover td {
+      background: var(--row-hover);
+    }
 
     /* Sticky column backgrounds (set via JS class, not inline style) */
-    td.sticky-col                          { background: var(--sticky-bg); text-align: left; font-weight: 500; }
-    tbody tr:nth-child(even) td.sticky-col { background: var(--sticky-even); }
-    tbody tr:hover td.sticky-col           { background: var(--sticky-hover); }
-    thead th.sticky-col                    { background: var(--sticky-th-bg); text-align: left; }
+    td.sticky-col {
+      background: var(--sticky-bg);
+      text-align: left;
+      font-weight: 500;
+    }
+
+    tbody tr:nth-child(even) td.sticky-col {
+      background: var(--sticky-even);
+    }
+
+    tbody tr:hover td.sticky-col {
+      background: var(--sticky-hover);
+    }
+
+    thead th.sticky-col {
+      background: var(--sticky-th-bg);
+      text-align: left;
+    }
 
     /* Right-edge shadow on the last frozen column */
-    .sticky-last { box-shadow: 3px 0 8px -2px rgba(0,0,0,0.18); }
+    .sticky-last {
+      box-shadow: 3px 0 8px -2px rgba(0, 0, 0, 0.18);
+    }
 
     /* ── Collapse toggle button (inside the Nomor <th>) ───────────── */
     .col-toggle-btn {
@@ -240,9 +306,9 @@
       right: 2px;
       top: 50%;
       transform: translateY(-50%);
-      background: rgba(255,255,255,0.18);
+      background: rgba(255, 255, 255, 0.18);
       color: #fff;
-      border: 1px solid rgba(255,255,255,0.32);
+      border: 1px solid rgba(255, 255, 255, 0.32);
       border-radius: 4px;
       padding: 2px 6px;
       font-size: 9px;
@@ -255,388 +321,413 @@
       white-space: nowrap;
       user-select: none;
     }
-    .col-toggle-btn:hover  { background: rgba(255,255,255,0.32); }
-    .col-toggle-btn:active { background: rgba(255,255,255,0.45); }
-    thead th.has-toggle { padding-right: 28px; }
+
+    .col-toggle-btn:hover {
+      background: rgba(255, 255, 255, 0.32);
+    }
+
+    .col-toggle-btn:active {
+      background: rgba(255, 255, 255, 0.45);
+    }
+
+    thead th.has-toggle {
+      padding-right: 28px;
+    }
 
     /* Row / column visibility */
-    .row-hidden { display: none; }
-    .col-hidden { display: none; }
+    .row-hidden {
+      display: none;
+    }
+
+    .col-hidden {
+      display: none;
+    }
 
     /* ── Mobile ───────────────────────────────────────────────── */
     @media (max-width: 600px) {
-      .app-header { padding: 10px 14px; }
-      .app-header h1 { font-size: 1rem; }
-      .main { padding: 8px; gap: 8px; }
+      .app-header {
+        padding: 10px 14px;
+      }
+
+      .app-header h1 {
+        font-size: 1rem;
+      }
+
+      .main {
+        padding: 8px;
+        gap: 8px;
+      }
     }
   </style>
 </head>
+
 <body>
 
-<header class="app-header" role="banner">
-  <div>
-    <h1>📋 Rekap IPL</h1>
-    <div class="subtitle">Data langsung dari Google Sheets</div>
-  </div>
-  <div class="header-right">
-    <span class="badge" id="row-count">Memuat…</span>
-  </div>
-</header>
+  <header class="app-header" role="banner">
+    <div>
+      <h1>📋 Rekap IPL</h1>
+      <div class="subtitle">Data langsung dari Google Sheets</div>
+    </div>
+    <div class="header-right">
+      <span class="badge" id="row-count">Memuat…</span>
+    </div>
+  </header>
 
-<main class="main" role="main">
+  <main class="main" role="main">
 
-  <div id="status" class="loading" aria-live="polite">
-    <div class="spinner" aria-hidden="true"></div>
-    <span>Mengambil data dari Google Sheets…</span>
-  </div>
+    <div id="status" class="loading" aria-live="polite">
+      <div class="spinner" aria-hidden="true"></div>
+      <span>Mengambil data dari Google Sheets…</span>
+    </div>
 
-  <div class="filter-bar" id="filter-bar" role="search" aria-label="Filter berdasarkan Blok">
-    <span class="filter-label">Filter Blok</span>
-    <div class="chip-group" id="blok-chips"></div>
-  </div>
+    <div class="filter-bar" id="filter-bar" role="search" aria-label="Filter berdasarkan Blok">
+      <span class="filter-label">Filter Blok</span>
+      <div class="chip-group" id="blok-chips"></div>
+    </div>
 
-  <div class="table-container" id="table-container">
-    <table id="rekap-table" role="grid" aria-label="Tabel Rekap IPL">
-      <thead id="thead"></thead>
-      <tbody id="tbody"></tbody>
-    </table>
-  </div>
+    <div class="table-container" id="table-container">
+      <table id="rekap-table" role="grid" aria-label="Tabel Rekap IPL">
+        <thead id="thead"></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
 
-</main>
+  </main>
 
-<script>
-  "use strict";
+  <script>
+    "use strict";
 
-  // ── CONFIG ────────────────────────────────────────────────────────────────
-  const CONFIG = {
-    SHEET_ID: "1xWE0qBxz69geRURuuGqNUHA2Ro78mg1ZOhCVU0Nqca4",
-    SHEET_NAME: "Import",
-    RANGE: "Import!A1:ZZ500",
-    STICKY_COLUMNS: [1, 2, 3], // Blok, Nama, Nomor
-    API_KEY: "YOUR_API_KEY_HERE"
-  };
+    // ── CONFIG ────────────────────────────────────────────────────────────────
+    const CONFIG = {
+      SHEET_ID: "1xWE0qBxz69geRURuuGqNUHA2Ro78mg1ZOhCVU0Nqca4",
+      SHEET_NAME: "Import",
+      RANGE: "Import!A1:ZZ500",
+      STICKY_COLUMNS: [1, 2, 3], // Blok, Nama, Nomor
+      API_KEY: "AIzaSyB3XSze6tbGqRwMmalCkoUtk9CKp4kvXCc"
+    };
 
-  // ── ELEMENT REFS ─────────────────────────────────────────────────────────
-  const statusEl    = document.getElementById("status");
-  const filterBarEl = document.getElementById("filter-bar");
-  const chipGroupEl = document.getElementById("blok-chips");
-  const containerEl = document.getElementById("table-container");
-  const theadEl     = document.getElementById("thead");
-  const tbodyEl     = document.getElementById("tbody");
-  const rowCountEl  = document.getElementById("row-count");
+    // ── ELEMENT REFS ─────────────────────────────────────────────────────────
+    const statusEl = document.getElementById("status");
+    const filterBarEl = document.getElementById("filter-bar");
+    const chipGroupEl = document.getElementById("blok-chips");
+    const containerEl = document.getElementById("table-container");
+    const theadEl = document.getElementById("thead");
+    const tbodyEl = document.getElementById("tbody");
+    const rowCountEl = document.getElementById("row-count");
 
-  // ── PANEL COLLAPSE STATE ─────────────────────────────────────────────────
-  let isCollapsed    = false;   // whether Nama/Blok are hidden by user toggle
-  let toggleBtn      = null;    // the ◀/▶ button element
-  let blokShouldShow = false;   // whether filter state says Blok col should show
+    // ── PANEL COLLAPSE STATE ─────────────────────────────────────────────────
+    let isCollapsed = false;   // whether Nama/Blok are hidden by user toggle
+    let toggleBtn = null;    // the ◀/▶ button element
+    let blokShouldShow = false;   // whether filter state says Blok col should show
 
-  // ── HELPERS ──────────────────────────────────────────────────────────────
+    // ── HELPERS ──────────────────────────────────────────────────────────────
 
-  /**
-   * Returns the best displayable string for a GViz cell object.
-   * Preference: cell.f (formatted) → cell.v → ""
-   */
-  function cellDisplay(val) {
-    if (val === null || val === undefined) return "";
-    let str = String(val).trim();
-    // spec rules
-    if (str === "√") return "✓";
-    return str;
-  }
+    /**
+     * Returns the best displayable string for a GViz cell object.
+     * Preference: cell.f (formatted) → cell.v → ""
+     */
+    function cellDisplay(val) {
+      if (val === null || val === undefined) return "";
+      let str = String(val).trim();
+      // spec rules
+      if (str === "√") return "✓";
+      return str;
+    }
 
-  function showLoading() {
-    statusEl.className = "loading";
-    statusEl.innerHTML =
-      '<div class="spinner" aria-hidden="true"></div>' +
-      '<span>Mengambil data dari Google Sheets…</span>';
-    statusEl.style.display = "";
-  }
+    function showLoading() {
+      statusEl.className = "loading";
+      statusEl.innerHTML =
+        '<div class="spinner" aria-hidden="true"></div>' +
+        '<span>Mengambil data dari Google Sheets…</span>';
+      statusEl.style.display = "";
+    }
 
-  function hideLoading() { statusEl.style.display = "none"; }
+    function hideLoading() { statusEl.style.display = "none"; }
 
-  function showError(msg) {
-    statusEl.className    = "error";
-    statusEl.textContent  = "⚠️ " + msg;
-    statusEl.style.display = "block";
-    rowCountEl.textContent = "Error";
-  }
+    function showError(msg) {
+      statusEl.className = "error";
+      statusEl.textContent = "⚠️ " + msg;
+      statusEl.style.display = "block";
+      rowCountEl.textContent = "Error";
+    }
 
-  // ── STICKY COLUMNS ───────────────────────────────────────────────────────
-  // Identifies sticky columns by `data-col` attribute (original data index).
-  // Must be called (via rAF) whenever sticky column visibility changes.
+    // ── STICKY COLUMNS ───────────────────────────────────────────────────────
+    // Identifies sticky columns by `data-col` attribute (original data index).
+    // Must be called (via rAF) whenever sticky column visibility changes.
 
-  function applyStickyColumns() {
-    // 1. Clear previous sticky state entirely
-    document.querySelectorAll(".sticky-col").forEach(el => {
-      el.classList.remove("sticky-col", "sticky-last");
-      el.style.position = "";
-      el.style.left     = "";
-      el.style.zIndex   = "";
-    });
-
-    // 2. Determine which of the configured sticky columns are currently visible
-    const visibleSticky = CONFIG.STICKY_COLUMNS.filter(colIdx => {
-      const th = document.querySelector(`#thead [data-col="${colIdx}"]`);
-      return th && !th.classList.contains("col-hidden");
-    });
-
-    // 3. Apply sticky left-to-right, accumulating offsets
-    let leftPx = 0;
-    visibleSticky.forEach((colIdx, i) => {
-      const isLast = i === visibleSticky.length - 1;
-      const th = document.querySelector(`#thead [data-col="${colIdx}"]`);
-      if (!th) return;
-      const width = th.getBoundingClientRect().width;
-
-      document.querySelectorAll(`[data-col="${colIdx}"]`).forEach(el => {
-        el.style.position = "sticky";
-        el.style.left     = leftPx + "px";
-        el.classList.add("sticky-col");
-        if (isLast) el.classList.add("sticky-last");
+    function applyStickyColumns() {
+      // 1. Clear previous sticky state entirely
+      document.querySelectorAll(".sticky-col").forEach(el => {
+        el.classList.remove("sticky-col", "sticky-last");
+        el.style.position = "";
+        el.style.left = "";
+        el.style.zIndex = "";
       });
 
-      // Header corner cells need highest z-index to sit above body sticky cells
-      document.querySelectorAll(`#thead [data-col="${colIdx}"]`)
-        .forEach(el => { el.style.zIndex = isLast ? "6" : "5"; });
-      document.querySelectorAll(`#tbody [data-col="${colIdx}"]`)
-        .forEach(el => { el.style.zIndex = "2"; });
+      // 2. Determine which of the configured sticky columns are currently visible
+      const visibleSticky = CONFIG.STICKY_COLUMNS.filter(colIdx => {
+        const th = document.querySelector(`#thead [data-col="${colIdx}"]`);
+        return th && !th.classList.contains("col-hidden");
+      });
 
-      leftPx += width;
-    });
-  }
+      // 3. Apply sticky left-to-right, accumulating offsets
+      let leftPx = 0;
+      visibleSticky.forEach((colIdx, i) => {
+        const isLast = i === visibleSticky.length - 1;
+        const th = document.querySelector(`#thead [data-col="${colIdx}"]`);
+        if (!th) return;
+        const width = th.getBoundingClientRect().width;
 
-  // ── COLUMN VISIBILITY ──────────────────────────────────────────────────────
-  // Single source of truth for Nama and Blok visibility.
-  // Driven by BOTH isCollapsed and blokShouldShow — call this whenever either changes.
-
-  function updateColumnVisibility() {
-    // Nama (data-col 2): hidden when panel is collapsed
-    document.querySelectorAll(`[data-col="2"]`)
-      .forEach(el => el.classList.toggle("col-hidden", isCollapsed));
-    // Blok (data-col 1): hidden when collapsed OR when filter doesn't need it
-    const showBlok = blokShouldShow && !isCollapsed;
-    document.querySelectorAll(`[data-col="1"]`)
-      .forEach(el => el.classList.toggle("col-hidden", !showBlok));
-  }
-
-  // ── COLLAPSE / EXPAND ─────────────────────────────────────────────────────
-
-  function collapsePanel() {
-    isCollapsed = true;
-    updateColumnVisibility();
-    requestAnimationFrame(() => applyStickyColumns());
-    if (toggleBtn) {
-      toggleBtn.textContent = "▶";
-      toggleBtn.title = "Tampilkan Nama";
-      toggleBtn.setAttribute("aria-label", "Tampilkan kolom Nama");
-    }
-  }
-
-  function expandPanel() {
-    isCollapsed = false;
-    updateColumnVisibility();
-    requestAnimationFrame(() => applyStickyColumns());
-    if (toggleBtn) {
-      toggleBtn.textContent = "◀";
-      toggleBtn.title = "Sembunyikan Nama";
-      toggleBtn.setAttribute("aria-label", "Sembunyikan kolom Nama");
-    }
-  }
-
-  // ── FILTER ───────────────────────────────────────────────────────────────
-
-  function applyFilter() {
-    const activeChips  = [...chipGroupEl.querySelectorAll(".chip:not(.chip-all).active")];
-    const isSemua      = activeChips.length === 0;
-    const selectedBloks = new Set(activeChips.map(c => c.dataset.blok));
-
-    // Hide/show rows
-    let visibleCount = 0;
-    document.querySelectorAll("#tbody tr").forEach(tr => {
-      const blokCell = tr.querySelector(`[data-col="1"]`);
-      const blokVal  = blokCell ? blokCell.textContent.trim() : "";
-      const show     = isSemua || selectedBloks.has(blokVal);
-      tr.classList.toggle("row-hidden", !show);
-      if (show) visibleCount++;
-    });
-
-    // Update Blok column visibility (respects both filter and collapse state)
-    blokShouldShow = activeChips.length > 1;
-    updateColumnVisibility();
-
-    // Re-pin sticky columns (offsets may change with col visibility)
-    requestAnimationFrame(() => applyStickyColumns());
-
-    rowCountEl.textContent = visibleCount + " warga";
-  }
-
-  function buildFilterChips(rows) {
-    // Collect unique Blok values from data rows (rows[1..n])
-    const blokSet = new Set();
-    rows.slice(1).forEach(row => {
-      const val = cellDisplay(row[1]);
-      if (val) blokSet.add(val);
-    });
-    const bloks = [...blokSet].sort();
-
-    // "Semua" chip — starts active
-    const allChip = document.createElement("button");
-    allChip.className    = "chip chip-all active";
-    allChip.textContent  = "Semua";
-    allChip.dataset.blok = "";
-    allChip.setAttribute("aria-pressed", "true");
-    chipGroupEl.appendChild(allChip);
-
-    bloks.forEach(blok => {
-      const chip = document.createElement("button");
-      chip.className    = "chip";
-      chip.textContent  = blok;
-      chip.dataset.blok = blok;
-      chip.setAttribute("aria-pressed", "false");
-      chipGroupEl.appendChild(chip);
-    });
-
-    filterBarEl.classList.add("visible");
-
-    // Single delegated listener on the chip group
-    chipGroupEl.addEventListener("click", e => {
-      const chip = e.target.closest(".chip");
-      if (!chip) return;
-
-      if (chip.classList.contains("chip-all")) {
-        // Reset: deactivate all, activate Semua
-        chipGroupEl.querySelectorAll(".chip").forEach(c => {
-          c.classList.remove("active");
-          c.setAttribute("aria-pressed", "false");
+        document.querySelectorAll(`[data-col="${colIdx}"]`).forEach(el => {
+          el.style.position = "sticky";
+          el.style.left = leftPx + "px";
+          el.classList.add("sticky-col");
+          if (isLast) el.classList.add("sticky-last");
         });
-        chip.classList.add("active");
-        chip.setAttribute("aria-pressed", "true");
-      } else {
-        // Toggle this chip; deactivate Semua
-        chipGroupEl.querySelector(".chip-all").classList.remove("active");
-        chipGroupEl.querySelector(".chip-all").setAttribute("aria-pressed", "false");
-        chip.classList.toggle("active");
-        chip.setAttribute("aria-pressed", chip.classList.contains("active") ? "true" : "false");
 
-        // If nothing is active, fall back to Semua
-        const anyActive = [...chipGroupEl.querySelectorAll(".chip:not(.chip-all)")]
-          .some(c => c.classList.contains("active"));
-        if (!anyActive) {
-          const all = chipGroupEl.querySelector(".chip-all");
-          all.classList.add("active");
-          all.setAttribute("aria-pressed", "true");
-        }
-      }
+        // Header corner cells need highest z-index to sit above body sticky cells
+        document.querySelectorAll(`#thead [data-col="${colIdx}"]`)
+          .forEach(el => { el.style.zIndex = isLast ? "6" : "5"; });
+        document.querySelectorAll(`#tbody [data-col="${colIdx}"]`)
+          .forEach(el => { el.style.zIndex = "2"; });
 
-      applyFilter();
-    });
-  }
-
-  // ── RENDER ───────────────────────────────────────────────────────────────
-
-  function render(rows) {
-    if (!rows || rows.length === 0) {
-      showError("Data tidak tersedia.");
-      return;
-    }
-
-    // rows[0] = header row
-    const headers = rows[0];
-    const theadRow = document.createElement("tr");
-    headers.forEach((text, i) => {
-      if (i === 0) return; // skip index 0 (RT)
-      const th = document.createElement("th");
-      th.textContent = text;
-      th.dataset.col = i;
-      theadRow.appendChild(th);
-    });
-
-    // Inject ◀/▶ toggle button into the Nomor <th> (data-col=3)
-    const nomorTh = theadRow.querySelector(`[data-col="3"]`);
-    if (nomorTh) {
-      nomorTh.classList.add("has-toggle");
-      toggleBtn = document.createElement("button");
-      toggleBtn.className   = "col-toggle-btn";
-      toggleBtn.textContent = "◀";
-      toggleBtn.title       = "Sembunyikan Nama";
-      toggleBtn.setAttribute("aria-label", "Sembunyikan kolom Nama");
-      toggleBtn.addEventListener("click", () =>
-        isCollapsed ? expandPanel() : collapsePanel()
-      );
-      nomorTh.appendChild(toggleBtn);
-    }
-    theadEl.appendChild(theadRow);
-
-    // rows[1..n] = data rows
-    const dataRows = rows.slice(1);
-    const fragment = document.createDocumentFragment();
-    
-    dataRows.forEach(row => {
-      const tr = document.createElement("tr");
-      // Normalize row length to match headers
-      const normalizedRow = [...row];
-      while (normalizedRow.length < headers.length) {
-        normalizedRow.push("");
-      }
-
-      normalizedRow.forEach((val, i) => {
-        if (i === 0) return; // skip index 0 (RT)
-        const td = document.createElement("td");
-        td.textContent = cellDisplay(val);
-        td.dataset.col = i;
-        tr.appendChild(td);
+        leftPx += width;
       });
-      fragment.appendChild(tr);
-    });
-    tbodyEl.appendChild(fragment);
+    }
 
-    containerEl.classList.add("visible");
-    rowCountEl.textContent = (rows.length - 1) + " warga";
+    // ── COLUMN VISIBILITY ──────────────────────────────────────────────────────
+    // Single source of truth for Nama and Blok visibility.
+    // Driven by BOTH isCollapsed and blokShouldShow — call this whenever either changes.
 
-    // Build filter chips (auto-populates from data)
-    buildFilterChips(rows);
+    function updateColumnVisibility() {
+      // Nama (data-col 2): hidden when panel is collapsed
+      document.querySelectorAll(`[data-col="2"]`)
+        .forEach(el => el.classList.toggle("col-hidden", isCollapsed));
+      // Blok (data-col 1): hidden when collapsed OR when filter doesn't need it
+      const showBlok = blokShouldShow && !isCollapsed;
+      document.querySelectorAll(`[data-col="1"]`)
+        .forEach(el => el.classList.toggle("col-hidden", !showBlok));
+    }
 
-    // Initial state: not collapsed, Blok hidden (filter = Semua)
-    requestAnimationFrame(() => {
+    // ── COLLAPSE / EXPAND ─────────────────────────────────────────────────────
+
+    function collapsePanel() {
+      isCollapsed = true;
       updateColumnVisibility();
-      applyStickyColumns();
-      // Auto-collapse on narrow screens so month columns are immediately visible
-      if (window.innerWidth < 640) collapsePanel();
-    });
-  }
-
-  // ── FETCH & PARSE ────────────────────────────────────────────────────────
-
-  async function loadData() {
-    showLoading();
-
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${encodeURIComponent(CONFIG.RANGE)}?valueRenderOption=FORMATTED_VALUE&dateTimeRenderOption=FORMATTED_STRING&key=${CONFIG.API_KEY}`;
-
-    try {
-      const res = await fetch(url);
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData?.error?.message || "HTTP " + res.status);
+      requestAnimationFrame(() => applyStickyColumns());
+      if (toggleBtn) {
+        toggleBtn.textContent = "▶";
+        toggleBtn.title = "Tampilkan Nama";
+        toggleBtn.setAttribute("aria-label", "Tampilkan kolom Nama");
       }
-      const data = await res.json();
-      
-      hideLoading();
+    }
 
-      if (!data.values || data.values.length === 0) {
-        showError("Data tidak tersedia atau sheet kosong.");
+    function expandPanel() {
+      isCollapsed = false;
+      updateColumnVisibility();
+      requestAnimationFrame(() => applyStickyColumns());
+      if (toggleBtn) {
+        toggleBtn.textContent = "◀";
+        toggleBtn.title = "Sembunyikan Nama";
+        toggleBtn.setAttribute("aria-label", "Sembunyikan kolom Nama");
+      }
+    }
+
+    // ── FILTER ───────────────────────────────────────────────────────────────
+
+    function applyFilter() {
+      const activeChips = [...chipGroupEl.querySelectorAll(".chip:not(.chip-all).active")];
+      const isSemua = activeChips.length === 0;
+      const selectedBloks = new Set(activeChips.map(c => c.dataset.blok));
+
+      // Hide/show rows
+      let visibleCount = 0;
+      document.querySelectorAll("#tbody tr").forEach(tr => {
+        const blokCell = tr.querySelector(`[data-col="1"]`);
+        const blokVal = blokCell ? blokCell.textContent.trim() : "";
+        const show = isSemua || selectedBloks.has(blokVal);
+        tr.classList.toggle("row-hidden", !show);
+        if (show) visibleCount++;
+      });
+
+      // Update Blok column visibility (respects both filter and collapse state)
+      blokShouldShow = activeChips.length > 1;
+      updateColumnVisibility();
+
+      // Re-pin sticky columns (offsets may change with col visibility)
+      requestAnimationFrame(() => applyStickyColumns());
+
+      rowCountEl.textContent = visibleCount + " warga";
+    }
+
+    function buildFilterChips(rows) {
+      // Collect unique Blok values from data rows (rows[1..n])
+      const blokSet = new Set();
+      rows.slice(1).forEach(row => {
+        const val = cellDisplay(row[1]);
+        if (val) blokSet.add(val);
+      });
+      const bloks = [...blokSet].sort();
+
+      // "Semua" chip — starts active
+      const allChip = document.createElement("button");
+      allChip.className = "chip chip-all active";
+      allChip.textContent = "Semua";
+      allChip.dataset.blok = "";
+      allChip.setAttribute("aria-pressed", "true");
+      chipGroupEl.appendChild(allChip);
+
+      bloks.forEach(blok => {
+        const chip = document.createElement("button");
+        chip.className = "chip";
+        chip.textContent = blok;
+        chip.dataset.blok = blok;
+        chip.setAttribute("aria-pressed", "false");
+        chipGroupEl.appendChild(chip);
+      });
+
+      filterBarEl.classList.add("visible");
+
+      // Single delegated listener on the chip group
+      chipGroupEl.addEventListener("click", e => {
+        const chip = e.target.closest(".chip");
+        if (!chip) return;
+
+        if (chip.classList.contains("chip-all")) {
+          // Reset: deactivate all, activate Semua
+          chipGroupEl.querySelectorAll(".chip").forEach(c => {
+            c.classList.remove("active");
+            c.setAttribute("aria-pressed", "false");
+          });
+          chip.classList.add("active");
+          chip.setAttribute("aria-pressed", "true");
+        } else {
+          // Toggle this chip; deactivate Semua
+          chipGroupEl.querySelector(".chip-all").classList.remove("active");
+          chipGroupEl.querySelector(".chip-all").setAttribute("aria-pressed", "false");
+          chip.classList.toggle("active");
+          chip.setAttribute("aria-pressed", chip.classList.contains("active") ? "true" : "false");
+
+          // If nothing is active, fall back to Semua
+          const anyActive = [...chipGroupEl.querySelectorAll(".chip:not(.chip-all)")]
+            .some(c => c.classList.contains("active"));
+          if (!anyActive) {
+            const all = chipGroupEl.querySelector(".chip-all");
+            all.classList.add("active");
+            all.setAttribute("aria-pressed", "true");
+          }
+        }
+
+        applyFilter();
+      });
+    }
+
+    // ── RENDER ───────────────────────────────────────────────────────────────
+
+    function render(rows) {
+      if (!rows || rows.length === 0) {
+        showError("Data tidak tersedia.");
         return;
       }
 
-      render(data.values);
-    } catch (err) {
-      hideLoading();
-      showError("Gagal memuat data: " + err.message);
-      console.error("[rekap] Load error:", err);
-    }
-  }
+      // rows[0] = header row
+      const headers = rows[0];
+      const theadRow = document.createElement("tr");
+      headers.forEach((text, i) => {
+        if (i === 0) return; // skip index 0 (RT)
+        const th = document.createElement("th");
+        th.textContent = text;
+        th.dataset.col = i;
+        theadRow.appendChild(th);
+      });
 
-  loadData();
-</script>
+      // Inject ◀/▶ toggle button into the Nomor <th> (data-col=3)
+      const nomorTh = theadRow.querySelector(`[data-col="3"]`);
+      if (nomorTh) {
+        nomorTh.classList.add("has-toggle");
+        toggleBtn = document.createElement("button");
+        toggleBtn.className = "col-toggle-btn";
+        toggleBtn.textContent = "◀";
+        toggleBtn.title = "Sembunyikan Nama";
+        toggleBtn.setAttribute("aria-label", "Sembunyikan kolom Nama");
+        toggleBtn.addEventListener("click", () =>
+          isCollapsed ? expandPanel() : collapsePanel()
+        );
+        nomorTh.appendChild(toggleBtn);
+      }
+      theadEl.appendChild(theadRow);
+
+      // rows[1..n] = data rows
+      const dataRows = rows.slice(1);
+      const fragment = document.createDocumentFragment();
+
+      dataRows.forEach(row => {
+        const tr = document.createElement("tr");
+        // Normalize row length to match headers
+        const normalizedRow = [...row];
+        while (normalizedRow.length < headers.length) {
+          normalizedRow.push("");
+        }
+
+        normalizedRow.forEach((val, i) => {
+          if (i === 0) return; // skip index 0 (RT)
+          const td = document.createElement("td");
+          td.textContent = cellDisplay(val);
+          td.dataset.col = i;
+          tr.appendChild(td);
+        });
+        fragment.appendChild(tr);
+      });
+      tbodyEl.appendChild(fragment);
+
+      containerEl.classList.add("visible");
+      rowCountEl.textContent = (rows.length - 1) + " warga";
+
+      // Build filter chips (auto-populates from data)
+      buildFilterChips(rows);
+
+      // Initial state: not collapsed, Blok hidden (filter = Semua)
+      requestAnimationFrame(() => {
+        updateColumnVisibility();
+        applyStickyColumns();
+        // Auto-collapse on narrow screens so month columns are immediately visible
+        if (window.innerWidth < 640) collapsePanel();
+      });
+    }
+
+    // ── FETCH & PARSE ────────────────────────────────────────────────────────
+
+    async function loadData() {
+      showLoading();
+
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${encodeURIComponent(CONFIG.RANGE)}?valueRenderOption=FORMATTED_VALUE&dateTimeRenderOption=FORMATTED_STRING&key=${CONFIG.API_KEY}`;
+
+      try {
+        const res = await fetch(url);
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData?.error?.message || "HTTP " + res.status);
+        }
+        const data = await res.json();
+
+        hideLoading();
+
+        if (!data.values || data.values.length === 0) {
+          showError("Data tidak tersedia atau sheet kosong.");
+          return;
+        }
+
+        render(data.values);
+      } catch (err) {
+        hideLoading();
+        showError("Gagal memuat data: " + err.message);
+        console.error("[rekap] Load error:", err);
+      }
+    }
+
+    loadData();
+  </script>
 
 </body>
+
 </html>
