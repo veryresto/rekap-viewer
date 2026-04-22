@@ -394,16 +394,16 @@
 
   </main>
 
+  <script src="config.js"></script>
   <script>
     "use strict";
 
     // ── CONFIG ────────────────────────────────────────────────────────────────
     const CONFIG = {
-      SHEET_ID: "1xWE0qBxz69geRURuuGqNUHA2Ro78mg1ZOhCVU0Nqca4",
-      SHEET_NAME: "Import",
-      RANGE: "Import!A1:ZZ550",
-      STICKY_COLUMNS: [1, 2, 3], // Blok, Nama, Nomor
-      API_KEY: "AIzaSyB3XSze6tbGqRwMmalCkoUtk9CKp4kvXCc"
+      SHEET_ID: window.APP_CONFIG?.SHEET_ID,
+      API_KEY: window.APP_CONFIG?.API_KEY,
+      RANGE: window.APP_CONFIG?.RANGE || "Import!A1:ZZ550",
+      STICKY_COLUMNS: [1, 2, 3]
     };
 
     // ── ELEMENT REFS ─────────────────────────────────────────────────────────
@@ -698,6 +698,12 @@
     // ── FETCH & PARSE ────────────────────────────────────────────────────────
 
     async function loadData() {
+      // 1. Check for missing configuration
+      if (!CONFIG.SHEET_ID || !CONFIG.API_KEY || CONFIG.SHEET_ID.includes("YOUR_")) {
+        showError("Konfigurasi Belum Lengkap. Pastikan SHEET_ID dan API_KEY sudah diatur di config.js atau Environment Variables.");
+        return;
+      }
+
       showLoading();
 
       const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${encodeURIComponent(CONFIG.RANGE)}?valueRenderOption=FORMATTED_VALUE&dateTimeRenderOption=FORMATTED_STRING&key=${CONFIG.API_KEY}`;
