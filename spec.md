@@ -4,40 +4,43 @@
 
 Build a **read-only web page** that displays Google Sheets IPL data with:
 
-- Sticky header (top row always visible)
-- Sticky first columns (RT, Blok, Nomor always visible)
-- Horizontal + vertical scrolling
-- Mobile-friendly layout
-- Auto-sync from Google Sheets (no manual export)
+- **Sticky header**: Top row remains visible during vertical scrolling.
+- **Sticky columns**: Blok, Nama, and Nomor (or just Nomor when collapsed) remain visible during horizontal scrolling.
+- **Collapsible Column**: Ability to hide the 'Nama' and 'Blok' columns to maximize visible data on small screens.
+- **Scrollable interaction**: Smooth horizontal and vertical scrolling.
+- **Mobile-friendly**: Optimized layout for small screens.
+- **Auto-sync**: Live data fetching from Google Sheets without manual exports.
 
 ---
 
 ## 2. Data Source
 
-### 2.1 Endpoint
+### 2.1 API
+Use **Google Sheets API v4**.
 
-Use Google Visualization API:
-
-```
-https://docs.google.com/spreadsheets/d/{SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet={SHEET_NAME}
+**Endpoint:**
+```http
+https://sheets.googleapis.com/v4/spreadsheets/{SPREADSHEET_ID}/values/{RANGE}?valueRenderOption=FORMATTED_VALUE&dateTimeRenderOption=FORMATTED_STRING&key={API_KEY}
 ```
 
 ### 2.2 Requirements
-
-- Google Sheet must be **published to web**
-- Sheet name must be URL-encoded
+- **Sheet Permissions:** Must be shared as "Anyone with the link → Viewer".
+- **Authentication:** API key must be created and restricted in the Google Cloud Console.
 
 ---
 
 ## 3. Configuration
 
-Define a config object at the top of the script:
+Define a `CONFIG` object at the top of the script for easy maintenance:
 
 ```javascript
 const CONFIG = {
-  SHEET_ID: "YOUR_SHEET_ID",
+  SHEET_ID: "YOUR_SHEET_ID_HERE",
   SHEET_NAME: "Import",
-  STICKY_COLUMNS: 4
+  RANGE: "Import!A1:ZZ500",
+  // Columns to keep sticky (Blok, Nama, Nomor)
+  STICKY_COLUMNS: [1, 2, 3], 
+  API_KEY: "YOUR_API_KEY_HERE"
 };
 ```
 
@@ -45,70 +48,78 @@ const CONFIG = {
 
 ## 4. Tech Stack
 
-- HTML (static)
-- Vanilla JavaScript (no framework)
-- CSS
-
-No build tools required.
+- **HTML5**: Semantic structure.
+- **Vanilla JavaScript**: Pure logic, no external frameworks or dependencies.
+- **Vanilla CSS**: Modern CSS for layout and sticky positioning.
+- **Build Tools**: None required (Static implementation).
 
 ---
 
 ## 5. Data Fetching
 
-### 5.1 Fetch
-
+### 5.1 Fetch Implementation
 ```javascript
-const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(CONFIG.SHEET_NAME)}`;
+const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${encodeURIComponent(CONFIG.RANGE)}?valueRenderOption=FORMATTED_VALUE&dateTimeRenderOption=FORMATTED_STRING&key=${CONFIG.API_KEY}`;
 
 const res = await fetch(url);
-const text = await res.text();
+const data = await res.json();
 ```
 
 ---
 
-## 6. Data Parsing
+## 6. Data Structure
 
-Google Visualization API returns JSONP-style wrapped JSON, not plain JSON.
+The Google Sheets API returns a JSON object containing the cell values in a 2D array.
 
-### 6.1 Parse Logic
-
-```javascript
-const json = JSON.parse(text.substring(47).slice(0, -2));
+### 6.1 Response Format
+```json
+{
+  "range": "...",
+  "majorDimension": "ROWS",
+  "values": [
+    ["RT", "Blok", "Nama", "Nomor", "Jan-24", "Feb-24"],
+    ["001", "D", "SARI...", "D4", "15/1/2024", "√"]
+  ]
+}
 ```
+
+### 6.2 Implementation Notes
+- **Column 0 (RT)**: Should be skipped or ignored in the final table rendering.
+- All values are returned as **strings**.
+- Empty cells may be **missing** from the array or returned as an **empty string**.
 
 ---
 
-## 7. Data Structure
+## 7. Data Normalization
 
-### 7.1 Columns
-
-```javascript
-json.table.cols
-```
-
-### 7.2 Rows
+Ensure all rows have equal length based on the header count:
 
 ```javascript
-json.table.rows
-```
+const headers = data.values[0];
+const rows = data.values.slice(1);
 
-### 7.3 Cell Value
-
-```javascript
-cell?.v ?? ""
+const normalizedRows = rows.map(row => {
+  const newRow = [...row];
+  while (newRow.length < headers.length) {
+    newRow.push("");
+  }
+  return newRow;
+});
 ```
 
 ---
 
 ## 8. UI Structure
 
-### 8.1 HTML
-
 ```html
 <div class="table-container">
-  <table>
-    <thead></thead>
-    <tbody></tbody>
+  <table id="rekap-table">
+    <thead>
+      <!-- Headers will be injected here -->
+    </thead>
+    <tbody>
+      <!-- Data rows will be injected here -->
+    </tbody>
   </table>
 </div>
 ```
@@ -118,177 +129,97 @@ cell?.v ?? ""
 ## 9. Rendering Logic
 
 ### 9.1 Render Header
-
-```javascript
-cols.forEach(col => {
-  const th = document.createElement("th");
-  th.innerText = col.label || "";
-  theadRow.appendChild(th);
-});
-```
+Inject headers, skipping index 0 (RT). Add a toggle button inside the "Nomor" column header.
 
 ### 9.2 Render Rows
-
-```javascript
-rows.forEach(row => {
-  const tr = document.createElement("tr");
-
-  row.c.forEach(cell => {
-    const td = document.createElement("td");
-    td.innerText = cell?.v ?? "";
-    tr.appendChild(td);
-  });
-
-  tbody.appendChild(tr);
-});
-```
+Inject data cells, skipping index 0 (RT).
 
 ---
 
 ## 10. Styling
 
-### 10.1 Container Scroll
-
-```css
-.table-container {
-  overflow: auto;
-  max-height: 80vh;
-  border: 1px solid #ddd;
-}
-```
-
-### 10.2 Table Base
-
-```css
-table {
-  border-collapse: collapse;
-  width: max-content;
-}
-
-th, td {
-  border: 1px solid #ddd;
-  padding: 8px;
-  white-space: nowrap;
-  font-size: 14px;
-  background: #fff;
-}
-```
-
-### 10.3 Sticky Header
-
-```css
-thead th {
-  position: sticky;
-  top: 0;
-  z-index: 3;
-}
-```
+- Use `position: sticky` for headers and frozen columns.
+- Use `z-index` to ensure headers stay above body cells.
+- Implementation should include a "collapsed" state for the sticky columns.
 
 ---
 
-## 11. Sticky Columns
+## 11. Sticky & Collapsible Logic
 
-### 11.1 Requirement
+### 11.1 Dynamic Offset Calculation
+Calculate the `left` position for each sticky column dynamically based on the width of visible preceding columns.
 
-The first `CONFIG.STICKY_COLUMNS` columns must remain visible during horizontal scroll.
-
-### 11.2 Implementation Strategy
-
-**Step 1 — After render, measure the width of each sticky column:**
-
-```javascript
-const firstRowCells = document.querySelectorAll("thead th");
-
-let offsets = [];
-let cumulative = 0;
-
-for (let i = 0; i < CONFIG.STICKY_COLUMNS; i++) {
-  offsets.push(cumulative);
-  cumulative += firstRowCells[i].offsetWidth;
-}
-```
-
-**Step 2 — Apply `position: sticky` with calculated `left` offset:**
-
-```javascript
-for (let i = 0; i < CONFIG.STICKY_COLUMNS; i++) {
-  const left = offsets[i];
-
-  document.querySelectorAll(`th:nth-child(${i + 1}), td:nth-child(${i + 1})`)
-    .forEach(el => {
-      el.style.position = "sticky";
-      el.style.left = `${left}px`;
-      el.style.zIndex = 2;
-      el.style.background = "#fff";
-    });
-}
-```
+### 11.2 Collapse Feature
+- **Toggle**: A ◀/▶ button located in the "Nomor" header.
+- **Effect**: Hides 'Nama' and 'Blok' columns.
+- **Purpose**: Maximizes screen real estate for month columns on mobile devices.
 
 ---
 
-## 12. Data Rules
+## 12. Data Rendering Rules
 
-- Null → empty string
-- Dates → display as-is
-- Symbols (✓) → display as-is
-- No transformation required
+| Raw Value | Display |
+| :--- | :--- |
+| `"√"` | ✓ |
+| Date string | Display as-is |
+| `""` or `null` | Empty cell |
 
 ---
 
 ## 13. Mobile Behavior
 
-- Horizontal scroll must work
-- Sticky columns must remain functional
-- Minimum font size: 12px
+- **Scrolling**: Seamless horizontal and vertical scrolling.
+- **Auto-Collapse**: Automatically collapse Nama/Blok on screens narrower than `640px`.
+- **Typography**: Minimum font size of `12px`.
 
 ---
 
 ## 14. Error Handling
 
-- If fetch fails → display message: `"Failed to load data"`
-- If parsing fails → log error and show empty table
+Basic validation for API responses:
+```javascript
+if (!data.values || data.values.length === 0) {
+  showError("Failed to load data or sheet is empty.");
+}
+```
 
 ---
 
-## 15. Performance Constraints
+## 15. Security
 
-- Rows: up to ~500
-- Columns: up to ~50
-- No virtualization required
-
----
-
-## 16. Deployment
-
-**Option A (Recommended):** Static HTML file, deployed via:
-
-- GitHub Pages
-- Netlify
+**API Key Protection:**
+- Restrict the API key by **HTTP Referrer**.
+- Use placeholders in public code.
 
 ---
 
-## 17. Acceptance Criteria
+## 16. Performance Constraints
 
-- [ ] Header stays visible on vertical scroll
-- [ ] First 3 columns stay visible on horizontal scroll
-- [ ] Data matches Google Sheets
-- [ ] Works on mobile devices
-- [ ] No Google Sheets UI is visible
-- [ ] No formulas are exposed
+- **Rows**: Scalable up to ~1,000 rows.
+- **Columns**: Scalable up to ~100 columns.
 
 ---
 
-## 18. Non-Goals
+## 18. Acceptance Criteria
 
-- Editing data
-- Authentication
-- Real-time updates (polling optional, not required)
+- [ ] RT Column is successfully removed from the UI.
+- [ ] Header remains fixed at the top.
+- [ ] Blok, Nama, and Nomor remain sticky.
+- [ ] Collapse toggle correctly hides/shows Nama and Blok.
+- [ ] Sticky offsets are recalculated after collapse/expand.
+- [ ] `√` markers are rendered as `✓`.
 
 ---
 
-## 19. Optional Enhancements (Not Required)
+## 19. Non-Goals
 
-- Search / filter
-- Sorting
-- Color highlight for paid status
-- Pagination
+- Data editing or writing.
+- Complex authentication.
+
+---
+
+## 20. Optional Enhancements
+
+- Client-side search and filtering.
+- Dynamic sorting.
+- Color highlighting for payment statuses.
