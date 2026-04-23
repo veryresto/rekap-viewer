@@ -499,6 +499,27 @@
       .search-wrap { max-width: 100%; flex-basis: 100%; min-width: 0; }
     }
 
+    /* ── Summary Columns ('24 / '25 / '26) ───────────────────── */
+    .sum-col {
+      font-size: clamp(10px, 1.3vw, 12px);
+      font-weight: 600;
+      text-align: center;
+      white-space: nowrap;
+      min-width: 42px;
+    }
+
+    .sum-th {
+      background: var(--sticky-th-bg) !important;
+      font-size: clamp(9px, 1.2vw, 11px);
+      letter-spacing: 0.04em;
+      color: #cbd5e1 !important;
+    }
+
+    .sum-partial {
+      background-color: #fef9c3;
+      color: #854d0e;
+    }
+
     /* ── Full Year Status Colors ─────────────────────────────── */
     .status-full-odd {
       background-color: #166534 !important; /* Dark Green */
@@ -673,6 +694,29 @@
         document.querySelectorAll(`#thead [data-col="${colIdx}"]`)
           .forEach(el => { el.style.zIndex = isLast ? "6" : "5"; });
         document.querySelectorAll(`#tbody [data-col="${colIdx}"]`)
+          .forEach(el => { el.style.zIndex = "2"; });
+
+        leftPx += width;
+      });
+
+      // Pin summary columns (s24, s25, s26) continuing the same leftPx offset
+      const SUMMARY_KEYS = ["s24", "s25", "s26"];
+      SUMMARY_KEYS.forEach((key, i) => {
+        const isLast = i === SUMMARY_KEYS.length - 1;
+        const th = document.querySelector(`#thead [data-col="${key}"]`);
+        if (!th) return;
+        const width = th.getBoundingClientRect().width;
+
+        document.querySelectorAll(`[data-col="${key}"]`).forEach(el => {
+          el.style.position = "sticky";
+          el.style.left = leftPx + "px";
+          el.classList.add("sticky-col");
+          if (isLast) el.classList.add("sticky-last");
+        });
+
+        document.querySelectorAll(`#thead [data-col="${key}"]`)
+          .forEach(el => { el.style.zIndex = isLast ? "6" : "5"; });
+        document.querySelectorAll(`#tbody [data-col="${key}"]`)
           .forEach(el => { el.style.zIndex = "2"; });
 
         leftPx += width;
@@ -916,6 +960,25 @@
       }
       theadEl.appendChild(theadRow);
 
+      // Inject summary column headers ('24, '25, '26) right after Nomor
+      const SUMMARY_YEARS = [
+        { key: "s24", label: "'24", yearKey: "24", full: 2024 },
+        { key: "s25", label: "'25", yearKey: "25", full: 2025 },
+        { key: "s26", label: "'26", yearKey: "26", full: 2026 },
+      ];
+
+      const nomorThInDom = theadEl.querySelector(`[data-col="3"]`);
+      if (nomorThInDom) {
+        // Insert in reverse so each one lands immediately after Nomor
+        [...SUMMARY_YEARS].reverse().forEach(({ key, label }) => {
+          const th = document.createElement("th");
+          th.textContent = label;
+          th.dataset.col = key;
+          th.classList.add("sum-th", "sum-col");
+          nomorThInDom.insertAdjacentElement("afterend", th);
+        });
+      }
+
       // rows[1..n] = data rows
       const dataRows = rows.slice(1);
       const fragment = document.createDocumentFragment();
@@ -957,6 +1020,39 @@
             }
           }
         }
+        // Inject summary tds ('24, '25, '26) right after Nomor td
+        // Insert in reverse so each ends up in correct order after Nomor
+        const nomorTd = cellsByCol[3];
+        if (nomorTd) {
+          [...SUMMARY_YEARS].reverse().forEach(({ key, yearKey, full }) => {
+            const colIndices = yearGroups[yearKey] || [];
+            const paidCount = colIndices.filter(idx => {
+              const val = row[idx];
+              return val && val.trim() !== "";
+            }).length;
+
+            const td = document.createElement("td");
+            td.dataset.col = key;
+            td.classList.add("sum-col");
+
+            if (colIndices.length === 0) {
+              td.textContent = "—";
+              td.style.color = "var(--text-muted)";
+            } else {
+              td.textContent = paidCount + "/12";
+              if (paidCount === 12) {
+                const isOdd = full % 2 !== 0;
+                td.classList.add(isOdd ? "status-full-odd" : "status-full-even");
+              } else if (paidCount > 0) {
+                td.classList.add("sum-partial");
+              }
+              // paidCount === 0 → neutral, no extra class
+            }
+
+            nomorTd.insertAdjacentElement("afterend", td);
+          });
+        }
+
         fragment.appendChild(tr);
       });
       tbodyEl.appendChild(fragment);
