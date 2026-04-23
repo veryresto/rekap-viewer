@@ -358,6 +358,76 @@
         gap: 8px;
       }
     }
+
+    /* ── Search Box ──────────────────────────────────────────── */
+    .filter-divider {
+      width: 1px;
+      height: 22px;
+      background: var(--border);
+      flex-shrink: 0;
+    }
+
+    .search-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 999px;
+      padding: 4px 10px;
+      flex: 1;
+      min-width: 170px;
+      max-width: 280px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .search-wrap:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+
+    .search-icon {
+      font-size: 0.8rem;
+      flex-shrink: 0;
+      color: var(--text-muted);
+    }
+
+    .search-input {
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 0.78rem;
+      color: var(--text);
+      flex: 1;
+      min-width: 0;
+      outline: none;
+    }
+
+    .search-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    /* Remove native clear button on type=search */
+    .search-input::-webkit-search-cancel-button { display: none; }
+
+    .search-clear {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.7rem;
+      padding: 0 2px;
+      line-height: 1;
+      flex-shrink: 0;
+      transition: color 0.1s;
+    }
+
+    .search-clear:hover { color: var(--error); }
+
+    @media (max-width: 600px) {
+      .filter-divider { display: none; }
+      .search-wrap { max-width: 100%; flex-basis: 100%; min-width: 0; }
+    }
   </style>
 </head>
 
@@ -380,9 +450,23 @@
       <span>Mengambil data dari Google Sheets…</span>
     </div>
 
-    <div class="filter-bar" id="filter-bar" role="search" aria-label="Filter berdasarkan Blok">
+    <div class="filter-bar" id="filter-bar" role="search" aria-label="Filter berdasarkan Blok atau cari nama">
       <span class="filter-label">Filter Blok</span>
       <div class="chip-group" id="blok-chips"></div>
+      <div class="filter-divider" aria-hidden="true"></div>
+      <div class="search-wrap">
+        <span class="search-icon" aria-hidden="true">⌕</span>
+        <input
+          id="search-input"
+          type="search"
+          class="search-input"
+          placeholder="Cari nama atau nomor…"
+          autocomplete="off"
+          spellcheck="false"
+          aria-label="Cari berdasarkan Nama atau Nomor"
+        />
+        <button id="search-clear" class="search-clear" aria-label="Hapus pencarian" hidden>✕</button>
+      </div>
     </div>
 
     <div class="table-container" id="table-container">
@@ -419,6 +503,7 @@
     let isCollapsed = false;   // whether Nama/Blok are hidden by user toggle
     let toggleBtn = null;    // the ◀/▶ button element
     let blokShouldShow = false;   // whether filter state says Blok col should show
+    let searchTerm = "";     // current normalised search string (lowercase, trimmed)
 
     // ── HELPERS ──────────────────────────────────────────────────────────────
 
@@ -543,9 +628,15 @@
       // Hide/show rows
       let visibleCount = 0;
       document.querySelectorAll("#tbody tr").forEach(tr => {
-        const blokCell = tr.querySelector(`[data-col="1"]`);
-        const blokVal = blokCell ? blokCell.textContent.trim() : "";
-        const show = isSemua || selectedBloks.has(blokVal);
+        const blokCell  = tr.querySelector(`[data-col="1"]`);
+        const blokVal   = blokCell ? blokCell.textContent.trim() : "";
+        const namaText  = tr.querySelector(`[data-col="2"]`)?.textContent.trim().toLowerCase() ?? "";
+        const nomorText = tr.querySelector(`[data-col="3"]`)?.textContent.trim().toLowerCase() ?? "";
+        const matchesBlok   = isSemua || selectedBloks.has(blokVal);
+        const matchesSearch = !searchTerm
+          || namaText.includes(searchTerm)
+          || nomorText.includes(searchTerm);
+        const show = matchesBlok && matchesSearch;
         tr.classList.toggle("row-hidden", !show);
         if (show) visibleCount++;
       });
@@ -559,6 +650,34 @@
 
       rowCountEl.textContent = visibleCount + " warga";
     }
+
+    // ── SEARCH ───────────────────────────────────────────────────────────────
+
+    function initSearch() {
+      const input    = document.getElementById("search-input");
+      const clearBtn = document.getElementById("search-clear");
+      if (!input) return;
+
+      let debounceTimer;
+      input.addEventListener("input", () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          searchTerm = input.value.trim().toLowerCase();
+          clearBtn.hidden = !searchTerm;
+          applyFilter();
+        }, 200);
+      });
+
+      clearBtn.addEventListener("click", () => {
+        input.value = "";
+        searchTerm = "";
+        clearBtn.hidden = true;
+        input.focus();
+        applyFilter();
+      });
+    }
+
+    // ── FILTER CHIPS ─────────────────────────────────────────────────────────
 
     function buildFilterChips(rows) {
       // Collect unique Blok values from data rows (rows[1..n])
@@ -587,6 +706,7 @@
       });
 
       filterBarEl.classList.add("visible");
+      initSearch();
 
       // Single delegated listener on the chip group
       chipGroupEl.addEventListener("click", e => {
