@@ -156,20 +156,26 @@
     /* ── Filter Bar ──────────────────────────────────────────── */
     .filter-bar {
       flex-shrink: 0;
-      display: none;
-      /* revealed after data loads */
-      align-items: center;
-      gap: 10px;
-      padding: 8px 14px;
+      display: none; /* revealed after data loads */
+      flex-direction: column;
+      align-items: stretch;
+      padding: 8px;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow-sm);
-      flex-wrap: wrap;
+      gap: 0;
     }
 
     .filter-bar.visible {
       display: flex;
+    }
+
+    .filter-main-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 4px 6px;
     }
 
     .filter-label {
@@ -179,6 +185,70 @@
       text-transform: uppercase;
       color: var(--text-muted);
       white-space: nowrap;
+      margin-right: 4px;
+    }
+
+    .filter-toggle-btn {
+      display: none; /* Hidden on desktop */
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-family: inherit;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+
+    .filter-toggle-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .filter-count-badge {
+      background: var(--accent);
+      color: white;
+      font-size: 0.65rem;
+      padding: 1px 6px;
+      border-radius: 10px;
+      line-height: 1.2;
+    }
+
+    .filter-content {
+      padding: 0 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Mobile Overrides */
+    @media (max-width: 600px) {
+      .filter-toggle-btn { display: flex; }
+      
+      .filter-label { display: none; }
+      
+      .filter-content {
+        display: none; /* Collapsed by default on mobile */
+        padding-top: 10px;
+        margin-top: 6px;
+        border-top: 1px solid var(--border);
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .filter-content.expanded {
+        display: flex;
+      }
+      
+      .search-wrap {
+        flex: 1;
+        max-width: none;
+      }
     }
 
     .chip-group {
@@ -467,23 +537,36 @@
     </div>
 
     <div class="filter-bar" id="filter-bar" role="search" aria-label="Filter berdasarkan Blok atau cari nama">
-      <span class="filter-label">Filter Blok</span>
-      <div class="chip-group" id="blok-chips"></div>
-      <div class="filter-divider" aria-hidden="true"></div>
-      <div class="search-wrap">
-        <span class="search-icon" aria-hidden="true">⌕</span>
-        <input
-          id="search-input"
-          type="search"
-          class="search-input"
-          placeholder="Cari nama atau nomor…"
-          autocomplete="off"
-          spellcheck="false"
-          aria-label="Cari berdasarkan Nama atau Nomor"
-        />
-        <button id="search-clear" class="search-clear" aria-label="Hapus pencarian" hidden>✕</button>
+      <!-- Top Row: Always Visible -->
+      <div class="filter-main-row">
+        <div class="search-wrap">
+          <span class="search-icon" aria-hidden="true">⌕</span>
+          <input
+            id="search-input"
+            type="search"
+            class="search-input"
+            placeholder="Cari nama atau nomor…"
+            autocomplete="off"
+            spellcheck="false"
+            aria-label="Cari berdasarkan Nama atau Nomor"
+          />
+          <button id="search-clear" class="search-clear" aria-label="Hapus pencarian" hidden>✕</button>
+        </div>
+
+        <button id="filter-toggle-btn" class="filter-toggle-btn" aria-expanded="false" aria-controls="filter-collapse-content">
+          <span>Unit Blok</span>
+          <span id="active-filter-count" class="filter-count-badge" hidden>0</span>
+          <span class="toggle-arrow" aria-hidden="true">▾</span>
+        </button>
+      </div>
+
+      <!-- Content Area (Mobile Collapsible) -->
+      <div id="filter-collapse-content" class="filter-content">
+        <span class="filter-label">Filter Blok</span>
+        <div class="chip-group" id="blok-chips"></div>
       </div>
     </div>
+
 
     <div class="table-container" id="table-container">
       <table id="rekap-table" role="grid" aria-label="Tabel Rekap IPL">
@@ -665,6 +748,18 @@
       requestAnimationFrame(() => applyStickyColumns());
 
       rowCountEl.textContent = visibleCount + " warga";
+
+      // Update toggle button badge if on mobile
+      const activeChips = chipGroupEl.querySelectorAll(".chip:not(.chip-all).active");
+      const badge = document.getElementById("active-filter-count");
+      if (badge) {
+        if (activeChips.length > 0) {
+          badge.textContent = activeChips.length;
+          badge.hidden = false;
+        } else {
+          badge.hidden = true;
+        }
+      }
     }
 
     // ── SEARCH ───────────────────────────────────────────────────────────────
@@ -690,6 +785,20 @@
         clearBtn.hidden = true;
         input.focus();
         applyFilter();
+      });
+    }
+
+    // ── MOBILE TOGGLE ────────────────────────────────────────────────────────
+
+    function initFilterToggle() {
+      const btn = document.getElementById("filter-toggle-btn");
+      const content = document.getElementById("filter-collapse-content");
+      if (!btn || !content) return;
+
+      btn.addEventListener("click", () => {
+        const isExpanded = content.classList.toggle("expanded");
+        btn.querySelector(".toggle-arrow").textContent = isExpanded ? "▴" : "▾";
+        btn.setAttribute("aria-expanded", isExpanded);
       });
     }
 
@@ -723,6 +832,7 @@
 
       filterBarEl.classList.add("visible");
       initSearch();
+      initFilterToggle();
 
       // Single delegated listener on the chip group
       chipGroupEl.addEventListener("click", e => {
