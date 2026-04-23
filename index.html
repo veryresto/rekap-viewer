@@ -428,6 +428,22 @@
       .filter-divider { display: none; }
       .search-wrap { max-width: 100%; flex-basis: 100%; min-width: 0; }
     }
+
+    /* ── Full Year Status Colors ─────────────────────────────── */
+    .status-full-odd {
+      background-color: #166534 !important; /* Dark Green */
+      color: #ffffff !important;
+      font-weight: 600;
+    }
+
+    .status-full-even {
+      background-color: #86efac !important; /* Light Green */
+      color: #166534 !important;
+      font-weight: 600;
+    }
+
+    tbody tr:hover td.status-full-odd { background-color: #14532d !important; }
+    tbody tr:hover td.status-full-even { background-color: #4ade80 !important; }
   </style>
 </head>
 
@@ -752,6 +768,20 @@
 
       // rows[0] = header row
       const headers = rows[0];
+
+      // Detect year groups for columns i > 3
+      const yearGroups = {}; // { "24": [4, 5, 6...], "25": [...] }
+      headers.forEach((text, i) => {
+        if (i <= 3) return; // Skip identity cols (RT, Blok, Nama, Nomor)
+        const match = text.match(/[- /](\d{2,4})$/);
+        if (match) {
+          const year = match[1];
+          const yearKey = year.length === 4 ? year.slice(-2) : year; // normalize to 2 digits for logic
+          if (!yearGroups[yearKey]) yearGroups[yearKey] = [];
+          yearGroups[yearKey].push(i);
+        }
+      });
+
       const theadRow = document.createElement("tr");
       headers.forEach((text, i) => {
         if (i === 0) return; // skip index 0 (RT)
@@ -789,13 +819,35 @@
           normalizedRow.push("");
         }
 
+        const cellsByCol = {}; // Store td refs to apply classes later
         normalizedRow.forEach((val, i) => {
           if (i === 0) return; // skip index 0 (RT)
           const td = document.createElement("td");
           td.textContent = cellDisplay(val);
           td.dataset.col = i;
           tr.appendChild(td);
+          cellsByCol[i] = td;
         });
+
+        // Check year groups for completion (must have 12 cells in that year)
+        for (const [year, colIndices] of Object.entries(yearGroups)) {
+          if (colIndices.length === 12) {
+            const isComplete = colIndices.every(idx => {
+              const val = row[idx];
+              return val && val.trim() !== "";
+            });
+
+            if (isComplete) {
+              const yearNum = parseInt(year);
+              const isOdd = (yearNum % 2) !== 0;
+              const className = isOdd ? "status-full-odd" : "status-full-even";
+
+              colIndices.forEach(idx => {
+                if (cellsByCol[idx]) cellsByCol[idx].classList.add(className);
+              });
+            }
+          }
+        }
         fragment.appendChild(tr);
       });
       tbodyEl.appendChild(fragment);
