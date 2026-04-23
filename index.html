@@ -750,7 +750,6 @@
       rowCountEl.textContent = visibleCount + " warga";
 
       // Update toggle button badge if on mobile
-      const activeChips = chipGroupEl.querySelectorAll(".chip:not(.chip-all).active");
       const badge = document.getElementById("active-filter-count");
       if (badge) {
         if (activeChips.length > 0) {
