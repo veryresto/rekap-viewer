@@ -1,0 +1,1268 @@
+# 📋 Rekap Viewer — Consolidated Source Code Summary
+filename: rekap-viewer-summary.md
+
+This document provides a comprehensive overview and the complete source code for the **Rekap Viewer** project. This file is designed to be shared with AI models to help them understand the entire codebase in a single context.
+
+## 📂 File Summaries
+
+### 1. [index.html](file:///Users/a/Codes/rekap-viewer/index.html)
+The core of the application. This is a **Single-File Application (SFA)** that contains:
+- **HTML5 Structure**: Semantic layout for the header, filter bar, and data table.
+- **Modern CSS**: A custom design system featuring sticky headers/columns, responsive layouts, and a "glassmorphism" inspired dark header.
+- **Vanilla JavaScript**: The entire business logic, including:
+  - Fetching data from the Google Sheets API.
+  - Interactive filtering (Live Search + Block Chips).
+  - Sticky column management with dynamic offset calculations.
+  - Year-over-year payment summary logic ('24, '25, '26).
+  - Mobile-responsive UI toggles.
+
+### 2. [config.js.example](file:///Users/a/Codes/rekap-viewer/config.js.example)
+A template for the application's security and data source settings. 
+- It defines the `SHEET_ID`, `API_KEY`, and data `RANGE`.
+- It serves as a guide for users to create their own `config.js` file, which is kept out of version control to protect sensitive API credentials.
+
+### 3. [sample.json](file:///Users/a/Codes/rekap-viewer/sample.json)
+An example of the raw JSON data structure returned by the Google Sheets API.
+- It helps developers understand the cell object format (e.g., `v` for value, `f` for formatted string).
+- It serves as a reference for the data transformation logic used in the rendering process.
+
+---
+
+## 🛠️ Source Code
+
+### index.html
+
+```html
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rekap IPL Viewer</title>
+  <meta name="description"
+    content="Tabel rekap pembayaran IPL warga, diambil langsung dari Google Sheets secara otomatis." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #f0f4f8;
+      --surface: #ffffff;
+      --th-bg: #1e3a5f;
+      --th-text: #e2e8f0;
+      --border: #d1d5db;
+      --row-even: #f8fafc;
+      --row-hover: #eff6ff;
+      --sticky-bg: #f1f5f9;
+      --sticky-even: #e8eef5;
+      --sticky-hover: #dbeafe;
+      --sticky-th-bg: #162f4a;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --accent: #3b82f6;
+      --error: #ef4444;
+      --error-bg: #fef2f2;
+      --shadow-sm: 0 1px 3px rgb(0 0 0 / .12);
+      --shadow: 0 4px 12px rgb(0 0 0 / .10);
+      --radius: 10px;
+    }
+
+    html,
+    body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── App Header ──────────────────────────────────────────── */
+    .app-header {
+      flex-shrink: 0;
+      background: var(--th-bg);
+      color: var(--th-text);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      box-shadow: var(--shadow);
+      z-index: 50;
+    }
+
+    .app-header h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: #fff;
+    }
+
+    .app-header .subtitle {
+      font-size: 0.7rem;
+      color: #94a3b8;
+      margin-top: 2px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .badge {
+      font-size: 0.7rem;
+      background: var(--accent);
+      color: #fff;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    /* ── Main layout ─────────────────────────────────────────── */
+    .main {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+      gap: 10px;
+      min-height: 0;
+    }
+
+    /* ── Status (loading / error) ────────────────────────────── */
+    #status {
+      display: none;
+      padding: 14px 16px;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+    }
+
+    #status.loading {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      box-shadow: var(--shadow-sm);
+    }
+
+    #status.error {
+      display: block;
+      background: var(--error-bg);
+      border: 1px solid #fca5a5;
+      color: var(--error);
+      font-weight: 500;
+    }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* ── Filter Bar ──────────────────────────────────────────── */
+    .filter-bar {
+      flex-shrink: 0;
+      display: none; /* revealed after data loads */
+      flex-direction: column;
+      align-items: stretch;
+      padding: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      gap: 0;
+    }
+
+    .filter-bar.visible {
+      display: flex;
+    }
+
+    .filter-main-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 4px 6px;
+    }
+
+    .filter-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      white-space: nowrap;
+      margin-right: 4px;
+    }
+
+    .filter-toggle-btn {
+      display: none; /* Hidden on desktop */
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-family: inherit;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+
+    .filter-toggle-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .filter-count-badge {
+      background: var(--accent);
+      color: white;
+      font-size: 0.65rem;
+      padding: 1px 6px;
+      border-radius: 10px;
+      line-height: 1.2;
+    }
+
+    .filter-content {
+      padding: 0 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Mobile Overrides */
+    @media (max-width: 600px) {
+      .filter-toggle-btn { display: flex; }
+      
+      .filter-label { display: none; }
+      
+      .filter-content {
+        display: none; /* Collapsed by default on mobile */
+        padding-top: 10px;
+        margin-top: 6px;
+        border-top: 1px solid var(--border);
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .filter-content.expanded {
+        display: flex;
+      }
+      
+      .search-wrap {
+        flex: 1;
+        max-width: none;
+      }
+    }
+
+    .chip-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .chip {
+      font-family: inherit;
+      font-size: 0.75rem;
+      font-weight: 500;
+      padding: 4px 13px;
+      border-radius: 999px;
+      border: 1.5px solid var(--border);
+      background: var(--bg);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: background 0.13s, border-color 0.13s, color 0.13s;
+      white-space: nowrap;
+      line-height: 1.5;
+    }
+
+    .chip:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: #eff6ff;
+    }
+
+    .chip.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .chip.chip-all.active {
+      background: var(--th-bg);
+      border-color: var(--th-bg);
+    }
+
+    /* ── Table Container ─────────────────────────────────────── */
+    .table-container {
+      flex: 1;
+      overflow: auto;
+      min-height: 0;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      background: var(--surface);
+      display: none;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .table-container.visible {
+      display: block;
+    }
+
+    /* ── Table ───────────────────────────────────────────────── */
+    table {
+      border-collapse: collapse;
+      width: max-content;
+      min-width: 100%;
+    }
+
+    th,
+    td {
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 7px 11px;
+      white-space: nowrap;
+      font-size: clamp(11px, 1.5vw, 13px);
+      background: var(--surface);
+      text-align: center;
+    }
+
+    thead th {
+      background: var(--th-bg);
+      color: var(--th-text);
+      font-weight: 600;
+      font-size: clamp(10px, 1.3vw, 12px);
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      letter-spacing: 0.03em;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.15);
+    }
+
+    tbody tr:nth-child(even) td {
+      background: var(--row-even);
+    }
+
+    tbody tr:hover td {
+      background: var(--row-hover);
+    }
+
+    /* Sticky column backgrounds (set via JS class, not inline style) */
+    td.sticky-col {
+      background: var(--sticky-bg);
+      text-align: left;
+      font-weight: 500;
+    }
+
+    tbody tr:nth-child(even) td.sticky-col {
+      background: var(--sticky-even);
+    }
+
+    tbody tr:hover td.sticky-col {
+      background: var(--sticky-hover);
+    }
+
+    thead th.sticky-col {
+      background: var(--sticky-th-bg);
+      text-align: left;
+    }
+
+    /* Right-edge shadow on the last frozen column */
+    .sticky-last {
+      box-shadow: 3px 0 8px -2px rgba(0, 0, 0, 0.18);
+    }
+
+    /* ── Collapse toggle button (inside the Nomor <th>) ───────────── */
+    .col-toggle-btn {
+      position: absolute;
+      right: 2px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255, 255, 255, 0.18);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.32);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 9px;
+      font-family: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      line-height: 1.6;
+      letter-spacing: 0.02em;
+      transition: background 0.15s;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .col-toggle-btn:hover {
+      background: rgba(255, 255, 255, 0.32);
+    }
+
+    .col-toggle-btn:active {
+      background: rgba(255, 255, 255, 0.45);
+    }
+
+    thead th.has-toggle {
+      padding-right: 28px;
+    }
+
+    /* Row / column visibility */
+    .row-hidden {
+      display: none;
+    }
+
+    .col-hidden {
+      display: none;
+    }
+
+    /* ── Mobile ───────────────────────────────────────────────── */
+    @media (max-width: 600px) {
+      .app-header {
+        padding: 10px 14px;
+      }
+
+      .app-header h1 {
+        font-size: 1rem;
+      }
+
+      .main {
+        padding: 8px;
+        gap: 8px;
+      }
+    }
+
+    /* ── Search Box ──────────────────────────────────────────── */
+    .filter-divider {
+      width: 1px;
+      height: 22px;
+      background: var(--border);
+      flex-shrink: 0;
+    }
+
+    .search-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 999px;
+      padding: 4px 10px;
+      flex: 1;
+      min-width: 170px;
+      max-width: 280px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .search-wrap:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+
+    .search-icon {
+      font-size: 0.8rem;
+      flex-shrink: 0;
+      color: var(--text-muted);
+    }
+
+    .search-input {
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 0.78rem;
+      color: var(--text);
+      flex: 1;
+      min-width: 0;
+      outline: none;
+    }
+
+    .search-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    /* Remove native clear button on type=search */
+    .search-input::-webkit-search-cancel-button { display: none; }
+
+    .search-clear {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.7rem;
+      padding: 0 2px;
+      line-height: 1;
+      flex-shrink: 0;
+      transition: color 0.1s;
+    }
+
+    .search-clear:hover { color: var(--error); }
+
+    @media (max-width: 600px) {
+      .filter-divider { display: none; }
+      .search-wrap { max-width: 100%; flex-basis: 100%; min-width: 0; }
+    }
+
+    /* ── Summary Columns ('24 / '25 / '26) ───────────────────── */
+    .sum-col {
+      font-size: clamp(10px, 1.3vw, 12px);
+      font-weight: 600;
+      text-align: center;
+      white-space: nowrap;
+      min-width: 42px;
+    }
+
+    .sum-th {
+      background: var(--sticky-th-bg) !important;
+      font-size: clamp(9px, 1.2vw, 11px);
+      letter-spacing: 0.04em;
+      color: #cbd5e1 !important;
+    }
+
+    .sum-partial {
+      background-color: #fef9c3;
+      color: #854d0e;
+    }
+
+    /* ── Full Year Status Colors ─────────────────────────────── */
+    .status-full-odd {
+      background-color: #166534 !important; /* Dark Green */
+      color: #ffffff !important;
+      font-weight: 600;
+    }
+
+    .status-full-even {
+      background-color: #86efac !important; /* Light Green */
+      color: #166534 !important;
+      font-weight: 600;
+    }
+
+    tbody tr:hover td.status-full-odd { background-color: #14532d !important; }
+    tbody tr:hover td.status-full-even { background-color: #4ade80 !important; }
+  </style>
+</head>
+
+<body>
+
+  <header class="app-header" role="banner">
+    <div>
+      <h1>📋 Rekap IPL</h1>
+      <div class="subtitle">Data langsung dari Google Sheets</div>
+    </div>
+    <div class="header-right">
+      <span class="badge" id="row-count">Memuat…</span>
+    </div>
+  </header>
+
+  <main class="main" role="main">
+
+    <div id="status" class="loading" aria-live="polite">
+      <div class="spinner" aria-hidden="true"></div>
+      <span>Mengambil data dari Google Sheets…</span>
+    </div>
+
+    <div class="filter-bar" id="filter-bar" role="search" aria-label="Filter berdasarkan Blok atau cari nama">
+      <!-- Top Row: Always Visible -->
+      <div class="filter-main-row">
+        <div class="search-wrap">
+          <span class="search-icon" aria-hidden="true">⌕</span>
+          <input
+            id="search-input"
+            type="search"
+            class="search-input"
+            placeholder="Cari nama atau nomor…"
+            autocomplete="off"
+            spellcheck="false"
+            aria-label="Cari berdasarkan Nama atau Nomor"
+          />
+          <button id="search-clear" class="search-clear" aria-label="Hapus pencarian" hidden>✕</button>
+        </div>
+
+        <button id="filter-toggle-btn" class="filter-toggle-btn" aria-expanded="false" aria-controls="filter-collapse-content">
+          <span>Unit Blok</span>
+          <span id="active-filter-count" class="filter-count-badge" hidden>0</span>
+          <span class="toggle-arrow" aria-hidden="true">▾</span>
+        </button>
+      </div>
+
+      <!-- Content Area (Mobile Collapsible) -->
+      <div id="filter-collapse-content" class="filter-content">
+        <span class="filter-label">Filter Blok</span>
+        <div class="chip-group" id="blok-chips"></div>
+      </div>
+    </div>
+
+
+    <div class="table-container" id="table-container">
+      <table id="rekap-table" role="grid" aria-label="Tabel Rekap IPL">
+        <thead id="thead"></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+  </main>
+
+  <script src="config.js"></script>
+  <script>
+    "use strict";
+
+    // ── CONFIG ────────────────────────────────────────────────────────────────
+    const CONFIG = {
+      SHEET_ID: window.APP_CONFIG?.SHEET_ID,
+      API_KEY: window.APP_CONFIG?.API_KEY,
+      RANGE: window.APP_CONFIG?.RANGE || "Import!A1:ZZ550",
+      STICKY_COLUMNS: [1, 2, 3]
+    };
+
+    // ── ELEMENT REFS ─────────────────────────────────────────────────────────
+    const statusEl = document.getElementById("status");
+    const filterBarEl = document.getElementById("filter-bar");
+    const chipGroupEl = document.getElementById("blok-chips");
+    const containerEl = document.getElementById("table-container");
+    const theadEl = document.getElementById("thead");
+    const tbodyEl = document.getElementById("tbody");
+    const rowCountEl = document.getElementById("row-count");
+
+    // ── PANEL COLLAPSE STATE ─────────────────────────────────────────────────
+    let isCollapsed = false;   // whether Nama/Blok are hidden by user toggle
+    let toggleBtn = null;    // the ◀/▶ button element
+    let blokShouldShow = false;   // whether filter state says Blok col should show
+    let searchTerm = "";     // current normalised search string (lowercase, trimmed)
+
+    // ── HELPERS ──────────────────────────────────────────────────────────────
+
+    /**
+     * Returns the best displayable string for a GViz cell object.
+     * Preference: cell.f (formatted) → cell.v → ""
+     */
+    function cellDisplay(val) {
+      if (val === null || val === undefined) return "";
+      let str = String(val).trim();
+      // spec rules
+      if (str === "√") return "✓";
+      return str;
+    }
+
+    function showLoading() {
+      statusEl.className = "loading";
+      statusEl.innerHTML =
+        '<div class="spinner" aria-hidden="true"></div>' +
+        '<span>Mengambil data dari Google Sheets…</span>';
+      statusEl.style.display = "";
+    }
+
+    function hideLoading() { statusEl.style.display = "none"; }
+
+    function showError(msg) {
+      statusEl.className = "error";
+      statusEl.textContent = "⚠️ " + msg;
+      statusEl.style.display = "block";
+      rowCountEl.textContent = "Error";
+    }
+
+    // ── STICKY COLUMNS ───────────────────────────────────────────────────────
+    // Identifies sticky columns by `data-col` attribute (original data index).
+    // Must be called (via rAF) whenever sticky column visibility changes.
+
+    function applyStickyColumns() {
+      // 1. Clear previous sticky state entirely
+      document.querySelectorAll(".sticky-col").forEach(el => {
+        el.classList.remove("sticky-col", "sticky-last");
+        el.style.position = "";
+        el.style.left = "";
+        el.style.zIndex = "";
+      });
+
+      // 2. Determine which of the configured sticky columns are currently visible
+      const visibleSticky = CONFIG.STICKY_COLUMNS.filter(colIdx => {
+        const th = document.querySelector(`#thead [data-col="${colIdx}"]`);
+        return th && !th.classList.contains("col-hidden");
+      });
+
+      // 3. Apply sticky left-to-right, accumulating offsets
+      let leftPx = 0;
+      visibleSticky.forEach((colIdx, i) => {
+        const isLast = i === visibleSticky.length - 1;
+        const th = document.querySelector(`#thead [data-col="${colIdx}"]`);
+        if (!th) return;
+        const width = th.getBoundingClientRect().width;
+
+        document.querySelectorAll(`[data-col="${colIdx}"]`).forEach(el => {
+          el.style.position = "sticky";
+          el.style.left = leftPx + "px";
+          el.classList.add("sticky-col");
+          if (isLast) el.classList.add("sticky-last");
+        });
+
+        // Header corner cells need highest z-index to sit above body sticky cells
+        document.querySelectorAll(`#thead [data-col="${colIdx}"]`)
+          .forEach(el => { el.style.zIndex = isLast ? "6" : "5"; });
+        document.querySelectorAll(`#tbody [data-col="${colIdx}"]`)
+          .forEach(el => { el.style.zIndex = "2"; });
+
+        leftPx += width;
+      });
+
+      // Pin summary columns (s24, s25, s26) continuing the same leftPx offset
+      const SUMMARY_KEYS = ["s24", "s25", "s26"];
+      SUMMARY_KEYS.forEach((key, i) => {
+        const isLast = i === SUMMARY_KEYS.length - 1;
+        const th = document.querySelector(`#thead [data-col="${key}"]`);
+        if (!th) return;
+        const width = th.getBoundingClientRect().width;
+
+        document.querySelectorAll(`[data-col="${key}"]`).forEach(el => {
+          el.style.position = "sticky";
+          el.style.left = leftPx + "px";
+          el.classList.add("sticky-col");
+          if (isLast) el.classList.add("sticky-last");
+        });
+
+        document.querySelectorAll(`#thead [data-col="${key}"]`)
+          .forEach(el => { el.style.zIndex = isLast ? "6" : "5"; });
+        document.querySelectorAll(`#tbody [data-col="${key}"]`)
+          .forEach(el => { el.style.zIndex = "2"; });
+
+        leftPx += width;
+      });
+    }
+
+    // ── COLUMN VISIBILITY ──────────────────────────────────────────────────────
+    // Single source of truth for Nama and Blok visibility.
+    // Driven by BOTH isCollapsed and blokShouldShow — call this whenever either changes.
+
+    function updateColumnVisibility() {
+      // Nama (data-col 2): hidden when panel is collapsed
+      document.querySelectorAll(`[data-col="2"]`)
+        .forEach(el => el.classList.toggle("col-hidden", isCollapsed));
+      // Blok (data-col 1): hidden when collapsed OR when filter doesn't need it
+      const showBlok = blokShouldShow && !isCollapsed;
+      document.querySelectorAll(`[data-col="1"]`)
+        .forEach(el => el.classList.toggle("col-hidden", !showBlok));
+    }
+
+    // ── COLLAPSE / EXPAND ─────────────────────────────────────────────────────
+
+    function collapsePanel() {
+      isCollapsed = true;
+      updateColumnVisibility();
+      requestAnimationFrame(() => applyStickyColumns());
+      if (toggleBtn) {
+        toggleBtn.textContent = "▶";
+        toggleBtn.title = "Tampilkan Nama";
+        toggleBtn.setAttribute("aria-label", "Tampilkan kolom Nama");
+      }
+    }
+
+    function expandPanel() {
+      isCollapsed = false;
+      updateColumnVisibility();
+      requestAnimationFrame(() => applyStickyColumns());
+      if (toggleBtn) {
+        toggleBtn.textContent = "◀";
+        toggleBtn.title = "Sembunyikan Nama";
+        toggleBtn.setAttribute("aria-label", "Sembunyikan kolom Nama");
+      }
+    }
+
+    // ── FILTER ───────────────────────────────────────────────────────────────
+
+    function applyFilter() {
+      const activeChips = [...chipGroupEl.querySelectorAll(".chip:not(.chip-all).active")];
+      const isSemua = activeChips.length === 0;
+      const selectedBloks = new Set(activeChips.map(c => c.dataset.blok));
+
+      // Hide/show rows
+      let visibleCount = 0;
+      document.querySelectorAll("#tbody tr").forEach(tr => {
+        const blokCell  = tr.querySelector(`[data-col="1"]`);
+        const blokVal   = blokCell ? blokCell.textContent.trim() : "";
+        const namaText  = tr.querySelector(`[data-col="2"]`)?.textContent.trim().toLowerCase() ?? "";
+        const nomorText = tr.querySelector(`[data-col="3"]`)?.textContent.trim().toLowerCase() ?? "";
+        const matchesBlok   = isSemua || selectedBloks.has(blokVal);
+        const matchesSearch = !searchTerm
+          || namaText.includes(searchTerm)
+          || nomorText.includes(searchTerm);
+        const show = matchesBlok && matchesSearch;
+        tr.classList.toggle("row-hidden", !show);
+        if (show) visibleCount++;
+      });
+
+      // Update Blok column visibility (respects both filter and collapse state)
+      blokShouldShow = activeChips.length > 1;
+      updateColumnVisibility();
+
+      // Re-pin sticky columns (offsets may change with col visibility)
+      requestAnimationFrame(() => applyStickyColumns());
+
+      rowCountEl.textContent = visibleCount + " warga";
+
+      // Update toggle button badge if on mobile
+      const badge = document.getElementById("active-filter-count");
+      if (badge) {
+        if (activeChips.length > 0) {
+          badge.textContent = activeChips.length;
+          badge.hidden = false;
+        } else {
+          badge.hidden = true;
+        }
+      }
+    }
+
+    // ── SEARCH ───────────────────────────────────────────────────────────────
+
+    function initSearch() {
+      const input    = document.getElementById("search-input");
+      const clearBtn = document.getElementById("search-clear");
+      if (!input) return;
+
+      let debounceTimer;
+      input.addEventListener("input", () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          searchTerm = input.value.trim().toLowerCase();
+          clearBtn.hidden = !searchTerm;
+          applyFilter();
+        }, 200);
+      });
+
+      clearBtn.addEventListener("click", () => {
+        input.value = "";
+        searchTerm = "";
+        clearBtn.hidden = true;
+        input.focus();
+        applyFilter();
+      });
+    }
+
+    // ── MOBILE TOGGLE ────────────────────────────────────────────────────────
+
+    function initFilterToggle() {
+      const btn = document.getElementById("filter-toggle-btn");
+      const content = document.getElementById("filter-collapse-content");
+      if (!btn || !content) return;
+
+      btn.addEventListener("click", () => {
+        const isExpanded = content.classList.toggle("expanded");
+        btn.querySelector(".toggle-arrow").textContent = isExpanded ? "▴" : "▾";
+        btn.setAttribute("aria-expanded", isExpanded);
+      });
+    }
+
+    // ── FILTER CHIPS ─────────────────────────────────────────────────────────
+
+    function buildFilterChips(rows) {
+      // Collect unique Blok values from data rows (rows[1..n])
+      const blokSet = new Set();
+      rows.slice(1).forEach(row => {
+        const val = cellDisplay(row[1]);
+        if (val) blokSet.add(val);
+      });
+      const bloks = [...blokSet].sort();
+
+      // "Semua" chip — starts active
+      const allChip = document.createElement("button");
+      allChip.className = "chip chip-all active";
+      allChip.textContent = "Semua";
+      allChip.dataset.blok = "";
+      allChip.setAttribute("aria-pressed", "true");
+      chipGroupEl.appendChild(allChip);
+
+      bloks.forEach(blok => {
+        const chip = document.createElement("button");
+        chip.className = "chip";
+        chip.textContent = blok;
+        chip.dataset.blok = blok;
+        chip.setAttribute("aria-pressed", "false");
+        chipGroupEl.appendChild(chip);
+      });
+
+      filterBarEl.classList.add("visible");
+      initSearch();
+      initFilterToggle();
+
+      // Single delegated listener on the chip group
+      chipGroupEl.addEventListener("click", e => {
+        const chip = e.target.closest(".chip");
+        if (!chip) return;
+
+        if (chip.classList.contains("chip-all")) {
+          // Reset: deactivate all, activate Semua
+          chipGroupEl.querySelectorAll(".chip").forEach(c => {
+            c.classList.remove("active");
+            c.setAttribute("aria-pressed", "false");
+          });
+          chip.classList.add("active");
+          chip.setAttribute("aria-pressed", "true");
+        } else {
+          // Toggle this chip; deactivate Semua
+          chipGroupEl.querySelector(".chip-all").classList.remove("active");
+          chipGroupEl.querySelector(".chip-all").setAttribute("aria-pressed", "false");
+          chip.classList.toggle("active");
+          chip.setAttribute("aria-pressed", chip.classList.contains("active") ? "true" : "false");
+
+          // If nothing is active, fall back to Semua
+          const anyActive = [...chipGroupEl.querySelectorAll(".chip:not(.chip-all)")]
+            .some(c => c.classList.contains("active"));
+          if (!anyActive) {
+            const all = chipGroupEl.querySelector(".chip-all");
+            all.classList.add("active");
+            all.setAttribute("aria-pressed", "true");
+          }
+        }
+
+        applyFilter();
+      });
+    }
+
+    // ── RENDER ───────────────────────────────────────────────────────────────
+
+    function render(rows) {
+      if (!rows || rows.length === 0) {
+        showError("Data tidak tersedia.");
+        return;
+      }
+
+      // rows[0] = header row
+      const headers = rows[0];
+
+      // Detect year groups for columns i > 3
+      const yearGroups = {}; // { "24": [4, 5, 6...], "25": [...] }
+      headers.forEach((text, i) => {
+        if (i <= 3) return; // Skip identity cols (RT, Blok, Nama, Nomor)
+        const match = text.match(/[- /](\d{2,4})$/);
+        if (match) {
+          const year = match[1];
+          const yearKey = year.length === 4 ? year.slice(-2) : year; // normalize to 2 digits for logic
+          if (!yearGroups[yearKey]) yearGroups[yearKey] = [];
+          yearGroups[yearKey].push(i);
+        }
+      });
+
+      const theadRow = document.createElement("tr");
+      headers.forEach((text, i) => {
+        if (i === 0) return; // skip index 0 (RT)
+        const th = document.createElement("th");
+        th.textContent = text;
+        th.dataset.col = i;
+        theadRow.appendChild(th);
+      });
+
+      // Inject ◀/▶ toggle button into the Nomor <th> (data-col=3)
+      const nomorTh = theadRow.querySelector(`[data-col="3"]`);
+      if (nomorTh) {
+        nomorTh.classList.add("has-toggle");
+        toggleBtn = document.createElement("button");
+        toggleBtn.className = "col-toggle-btn";
+        toggleBtn.textContent = "◀";
+        toggleBtn.title = "Sembunyikan Nama";
+        toggleBtn.setAttribute("aria-label", "Sembunyikan kolom Nama");
+        toggleBtn.addEventListener("click", () =>
+          isCollapsed ? expandPanel() : collapsePanel()
+        );
+        nomorTh.appendChild(toggleBtn);
+      }
+      theadEl.appendChild(theadRow);
+
+      // Inject summary column headers ('24, '25, '26) right after Nomor
+      const SUMMARY_YEARS = [
+        { key: "s24", label: "'24", yearKey: "24", full: 2024 },
+        { key: "s25", label: "'25", yearKey: "25", full: 2025 },
+        { key: "s26", label: "'26", yearKey: "26", full: 2026 },
+      ];
+
+      const nomorThInDom = theadEl.querySelector(`[data-col="3"]`);
+      if (nomorThInDom) {
+        // Insert in reverse so each one lands immediately after Nomor
+        [...SUMMARY_YEARS].reverse().forEach(({ key, label }) => {
+          const th = document.createElement("th");
+          th.textContent = label;
+          th.dataset.col = key;
+          th.classList.add("sum-th", "sum-col");
+          nomorThInDom.insertAdjacentElement("afterend", th);
+        });
+      }
+
+      // rows[1..n] = data rows
+      const dataRows = rows.slice(1);
+      const fragment = document.createDocumentFragment();
+
+      dataRows.forEach(row => {
+        const tr = document.createElement("tr");
+        // Normalize row length to match headers
+        const normalizedRow = [...row];
+        while (normalizedRow.length < headers.length) {
+          normalizedRow.push("");
+        }
+
+        const cellsByCol = {}; // Store td refs to apply classes later
+        normalizedRow.forEach((val, i) => {
+          if (i === 0) return; // skip index 0 (RT)
+          const td = document.createElement("td");
+          td.textContent = cellDisplay(val);
+          td.dataset.col = i;
+          tr.appendChild(td);
+          cellsByCol[i] = td;
+        });
+
+        // Check year groups for completion (must have 12 cells in that year)
+        for (const [year, colIndices] of Object.entries(yearGroups)) {
+          if (colIndices.length === 12) {
+            const isComplete = colIndices.every(idx => {
+              const val = row[idx];
+              return val && val.trim() !== "";
+            });
+
+            if (isComplete) {
+              const yearNum = parseInt(year);
+              const isOdd = (yearNum % 2) !== 0;
+              const className = isOdd ? "status-full-odd" : "status-full-even";
+
+              colIndices.forEach(idx => {
+                if (cellsByCol[idx]) cellsByCol[idx].classList.add(className);
+              });
+            }
+          }
+        }
+        // Inject summary tds ('24, '25, '26) right after Nomor td
+        // Insert in reverse so each ends up in correct order after Nomor
+        const nomorTd = cellsByCol[3];
+        if (nomorTd) {
+          [...SUMMARY_YEARS].reverse().forEach(({ key, yearKey, full }) => {
+            const colIndices = yearGroups[yearKey] || [];
+            const paidCount = colIndices.filter(idx => {
+              const val = row[idx];
+              return val && val.trim() !== "";
+            }).length;
+
+            const td = document.createElement("td");
+            td.dataset.col = key;
+            td.classList.add("sum-col");
+
+            if (colIndices.length === 0) {
+              td.textContent = "—";
+              td.style.color = "var(--text-muted)";
+            } else {
+              td.textContent = paidCount + "/12";
+              if (paidCount === 12) {
+                const isOdd = full % 2 !== 0;
+                td.classList.add(isOdd ? "status-full-odd" : "status-full-even");
+              } else if (paidCount > 0) {
+                td.classList.add("sum-partial");
+              }
+              // paidCount === 0 → neutral, no extra class
+            }
+
+            nomorTd.insertAdjacentElement("afterend", td);
+          });
+        }
+
+        fragment.appendChild(tr);
+      });
+      tbodyEl.appendChild(fragment);
+
+      containerEl.classList.add("visible");
+      rowCountEl.textContent = (rows.length - 1) + " warga";
+
+      // Build filter chips (auto-populates from data)
+      buildFilterChips(rows);
+
+      // Initial state: not collapsed, Blok hidden (filter = Semua)
+      requestAnimationFrame(() => {
+        updateColumnVisibility();
+        applyStickyColumns();
+        // Auto-collapse on narrow screens so month columns are immediately visible
+        if (window.innerWidth < 640) collapsePanel();
+      });
+    }
+
+    // ── FETCH & PARSE ────────────────────────────────────────────────────────
+
+    async function loadData() {
+      // 1. Check for missing configuration
+      if (!CONFIG.SHEET_ID || !CONFIG.API_KEY || CONFIG.SHEET_ID.includes("YOUR_")) {
+        showError("Konfigurasi Belum Lengkap. Pastikan SHEET_ID dan API_KEY sudah diatur di config.js atau Environment Variables.");
+        return;
+      }
+
+      showLoading();
+
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${encodeURIComponent(CONFIG.RANGE)}?valueRenderOption=FORMATTED_VALUE&dateTimeRenderOption=FORMATTED_STRING&key=${CONFIG.API_KEY}`;
+
+      try {
+        const res = await fetch(url);
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData?.error?.message || "HTTP " + res.status);
+        }
+        const data = await res.json();
+
+        hideLoading();
+
+        if (!data.values || data.values.length === 0) {
+          showError("Data tidak tersedia atau sheet kosong.");
+          return;
+        }
+
+        render(data.values);
+      } catch (err) {
+        hideLoading();
+        showError("Gagal memuat data: " + err.message);
+        console.error("[rekap] Load error:", err);
+      }
+    }
+
+    loadData();
+  </script>
+
+</body>
+
+</html>
+```
+
+### config.js.example
+
+```javascript
+/**
+ * Example configuration file.
+ * Copy this file to 'config.js' and fill in your values.
+ * This file is git-ignored for security.
+ */
+window.APP_CONFIG = {
+  SHEET_ID: "YOUR_SHEET_ID_HERE",
+  API_KEY: "YOUR_API_KEY_HERE",
+  RANGE: "Import!A1:ZZ550"
+};
+```
+
+### sample.json
+
+```json
+[
+    {
+        "v": "RT001"
+    },
+    {
+        "v": "D"
+    },
+    {
+        "v": "SARI KUSUMA DEWI"
+    },
+    {
+        "v": "D4"
+    },
+    {
+        "v": "Date(2024,0,15)",
+        "f": "15/1/2024"
+    },
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    {
+        "v": "Date(2025,3,8)",
+        "f": "8/4/2025"
+    },
+    null,
+    null,
+    null,
+    null,
+    null,
+    {
+        "v": "Date(2025,7,6)",
+        "f": "6/8/2025"
+    },
+    null,
+    null,
+    null,
+    null,
+    null,
+    {
+        "v": "Date(2025,11,3)",
+        "f": "3/12/2025"
+    },
+    null,
+    null,
+    {
+        "v": "√"
+    },
+    {
+        "v": "√"
+    },
+    {
+        "v": "√"
+    },
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    {
+        "v": null
+    }
+]
+```
