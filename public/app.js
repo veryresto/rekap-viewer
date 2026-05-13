@@ -2,7 +2,7 @@
 
 // ── CONFIG ────────────────────────────────────────────────────────────────
 const CONFIG = {
-  STICKY_COLUMNS: [1, 2, 3]
+  STICKY_COLUMNS: [1, 2]
 };
 
 // ── ELEMENT REFS ─────────────────────────────────────────────────────────
@@ -117,9 +117,6 @@ function applyStickyColumns() {
 
 // ── COLUMN VISIBILITY ──────────────────────────────────────────────────────
 function updateColumnVisibility() {
-  // Nama (data-col 2): hidden when panel is collapsed
-  document.querySelectorAll(`[data-col="2"]`)
-    .forEach(el => el.classList.toggle("col-hidden", isCollapsed));
   // Blok (data-col 1): hidden when collapsed OR when filter doesn't need it
   const showBlok = blokShouldShow && !isCollapsed;
   document.querySelectorAll(`[data-col="1"]`)
@@ -131,22 +128,12 @@ function collapsePanel() {
   isCollapsed = true;
   updateColumnVisibility();
   requestAnimationFrame(() => applyStickyColumns());
-  if (toggleBtn) {
-    toggleBtn.textContent = "▶";
-    toggleBtn.title = "Tampilkan Nama";
-    toggleBtn.setAttribute("aria-label", "Tampilkan kolom Nama");
-  }
 }
 
 function expandPanel() {
   isCollapsed = false;
   updateColumnVisibility();
   requestAnimationFrame(() => applyStickyColumns());
-  if (toggleBtn) {
-    toggleBtn.textContent = "◀";
-    toggleBtn.title = "Sembunyikan Nama";
-    toggleBtn.setAttribute("aria-label", "Sembunyikan kolom Nama");
-  }
 }
 
 // ── FILTER ───────────────────────────────────────────────────────────────
@@ -160,11 +147,9 @@ function applyFilter() {
   document.querySelectorAll("#tbody tr").forEach(tr => {
     const blokCell  = tr.querySelector(`[data-col="1"]`);
     const blokVal   = blokCell ? blokCell.textContent.trim() : "";
-    const namaText  = tr.querySelector(`[data-col="2"]`)?.textContent.trim().toLowerCase() ?? "";
-    const nomorText = tr.querySelector(`[data-col="3"]`)?.textContent.trim().toLowerCase() ?? "";
+    const nomorText = tr.querySelector(`[data-col="2"]`)?.textContent.trim().toLowerCase() ?? "";
     const matchesBlok   = isSemua || selectedBloks.has(blokVal);
     const matchesSearch = !searchTerm
-      || namaText.includes(searchTerm)
       || nomorText.includes(searchTerm);
     const show = matchesBlok && matchesSearch;
     tr.classList.toggle("row-hidden", !show);
@@ -298,7 +283,7 @@ function render(rows) {
   const headers = rows[0];
   const yearGroups = {}; 
   headers.forEach((text, i) => {
-    if (i <= 3) return; 
+    if (i <= 2) return; 
     const match = text.match(/[- /](\d{2,4})$/);
     if (match) {
       const year = match[1];
@@ -317,19 +302,7 @@ function render(rows) {
     theadRow.appendChild(th);
   });
 
-  const nomorTh = theadRow.querySelector(`[data-col="3"]`);
-  if (nomorTh) {
-    nomorTh.classList.add("has-toggle");
-    toggleBtn = document.createElement("button");
-    toggleBtn.className = "col-toggle-btn";
-    toggleBtn.textContent = "◀";
-    toggleBtn.title = "Sembunyikan Nama";
-    toggleBtn.setAttribute("aria-label", "Sembunyikan kolom Nama");
-    toggleBtn.addEventListener("click", () =>
-      isCollapsed ? expandPanel() : collapsePanel()
-    );
-    nomorTh.appendChild(toggleBtn);
-  }
+  // Removed: ◀/▶ toggle button in the Nomor <th>
   theadEl.appendChild(theadRow);
 
   const SUMMARY_YEARS = [
@@ -338,7 +311,7 @@ function render(rows) {
     { key: "s26", label: "'26", yearKey: "26", full: 2026 },
   ];
 
-  const nomorThInDom = theadEl.querySelector(`[data-col="3"]`);
+  const nomorThInDom = theadEl.querySelector(`[data-col="2"]`);
   if (nomorThInDom) {
     [...SUMMARY_YEARS].reverse().forEach(({ key, label }) => {
       const th = document.createElement("th");
@@ -387,7 +360,7 @@ function render(rows) {
         }
       }
     }
-    const nomorTd = cellsByCol[3];
+    const nomorTd = cellsByCol[2];
     if (nomorTd) {
       [...SUMMARY_YEARS].reverse().forEach(({ key, yearKey, full }) => {
         const colIndices = yearGroups[yearKey] || [];

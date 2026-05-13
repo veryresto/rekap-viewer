@@ -53,6 +53,19 @@ app.get('/api/rekap', async (req, res) => {
         }
 
         const data = await response.json();
+        
+        // Filter out index 2 (Nama) if values exist
+        if (data.values && Array.isArray(data.values)) {
+            data.values = data.values.map(row => {
+                if (row.length > 2) {
+                    const newRow = [...row];
+                    newRow.splice(2, 1); // Remove 3rd element (index 2)
+                    return newRow;
+                }
+                return row;
+            });
+        }
+
         res.json(data);
     } catch (error) {
         clearTimeout(timeoutId);
