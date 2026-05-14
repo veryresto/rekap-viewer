@@ -1,0 +1,28 @@
+========================================
+Benchmark
+Time: Thu May 14 13:30:43 UTC 2026
+Host: as-MacBook-Pro.local
+URL : https://rekap.veryresto.com/api/rekap
+File: benchmark_as-MacBook-Pro_20260514_203043.log
+========================================
+
+=== Response Headers ===
+x-fly-region: sin
+x-cache-updated-at: 2026-05-14T13:29:58.156Z
+x-cache-age: 47
+date: Thu, 14 May 2026 13:30:46 GMT
+server: Fly/8829d9560 (2026-05-12)
+fly-request-id: 01KRKAXEYD7EYZS8Q1P9WED6KF-sin
+
+=== Timing Metrics ===
+
+DNS Lookup      : 0.001517s
+TCP Connect     : 0.019060s
+TLS Handshake   : 0.434041s
+TTFB            : 0.479625s
+Total           : 0.577335s
+Download Speed  : 232727 bytes/s
+Remote IP       : 66.241.125.101
+HTTP Version    : 2
+Response Code   : 200
+

@@ -1,12 +1,17 @@
 #!/usr/bin/env bash
 
 URL="${1:-https://rekap.veryresto.com/api/rekap}"
+HOSTNAME=$(hostname -s)
+TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+OUTPUT_FILE="benchmark_${HOSTNAME}_${TIMESTAMP}.log"
 
+{
 echo "========================================"
 echo "Benchmark"
 echo "Time: $(date -u)"
 echo "Host: $(hostname)"
 echo "URL : $URL"
+echo "File: $OUTPUT_FILE"
 echo "========================================"
 
 echo
@@ -28,3 +33,6 @@ HTTP Version    : %{http_version}
 Response Code   : %{response_code}
 
 " "$URL"
+} | tee "$OUTPUT_FILE"
+
+echo "Results also saved to: $OUTPUT_FILE"
