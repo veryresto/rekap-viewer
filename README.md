@@ -10,7 +10,10 @@
 
 A premium, mobile-friendly web application to visualize IPL (Iuran Pemeliharaan Lingkungan) payment data directly from Google Sheets. Built with pure HTML/CSS/JS for maximum performance and zero dependencies.
 
-![UI Preview](mobile-sample.jpeg)
+<details>
+  <summary>📸 View UI Preview</summary>
+  <img src="mobile-sample.jpeg" width="400" alt="UI Preview">
+</details>
 
 ## ✨ Features
 
