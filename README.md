@@ -14,6 +14,13 @@ A secure, high-performance web application to visualize IPL (Iuran Pemeliharaan 
 
 ---
 
+## Live Demo
+
+- **Fly Domain**: [rekap-viewer.fly.dev](https://rekap-viewer.fly.dev/)
+- **Custom Domain**: [rekap.veryresto.com](https://rekap.veryresto.com/)
+
+---
+
 ## 🏗️ Architecture Evolution
 
 This project serves as a hands-on exploration of **Fly.io** and operational best practices. It evolved from a simple static site into a cached backend architecture to address practical challenges like credential security, request latency, and state-sharing in distributed environments.
