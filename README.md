@@ -14,6 +14,40 @@ A secure, high-performance web application to visualize IPL (Iuran Pemeliharaan 
 
 ---
 
+## 🏗️ Architecture Evolution
+
+This project serves as a hands-on exploration of **Fly.io** and operational best practices. It evolved from a simple static site into a cached backend architecture to address practical challenges like credential security, request latency, and state-sharing in distributed environments.
+
+### Phase 1: Static Frontend (The Beginning)
+*   **Architecture**: `Browser → Google Sheets API`
+*   **Status**: Legacy (Proof of Concept)
+*   **Description**: Originally a static frontend hosted on Netlify. While functional, it exposed the Spreadsheet ID and Google API Key in the client-side code. Performance was directly coupled to Google Sheets API latency.
+*   **Branch**: [`main`](https://github.com/veryresto/rekap-viewer/tree/main)
+
+### Phase 2: Secure Proxy (Node.js + Fly.io)
+*   **Architecture**: `Browser → Fly Backend → Google Sheets API`
+*   **Status**: Intermediate
+*   **Description**: Migrated to a Node.js backend on Fly.io. This allowed for secure secrets management (API keys hidden), custom domains, and better observability. I used this phase to gain operational experience with Fly Machines, request tracing, and failure scenario testing.
+*   **Branch**: [`fly-backend`](https://github.com/veryresto/rekap-viewer/tree/fly-backend)
+
+### Phase 3: Adding Caching Layer (Current)
+*   **Architecture**: `Browser → Fly Backend → Tigris Object Storage`
+*   **Status**: **Current**
+*   **Description**: Introduced a caching layer using **Tigris Object Storage** with a background refresh every 5 minutes. This decoupled user requests from Google Sheets latency, significantly reducing TTFB. Tigris was chosen over local storage to ensure a shared cache state across future multi-region deployments.
+*   **Branch**: [`fly-object-storage`](https://github.com/veryresto/rekap-viewer/tree/fly-object-storage)
+
+### 📊 Performance Insights & Benchmarking
+
+To validate the architecture, I benchmarked the app from multiple locations using `curl` timing metrics.
+
+*   **Key Finding**: Requests entering via Fly's London edge were noticeably faster than requests from a standard London VM over the public internet.
+*   **Tools**: [benchmark.sh](helpers/benchmark.sh)
+*   **Results**:
+    - [Singapore Benchmark Log](helpers/benchmark_ubuntu-singapore_20260514_141302.log)
+    - [London Benchmark Log](helpers/benchmark_ubuntu-benchmark-london_20260514_135825.log)
+
+---
+
 ## 🛠️ Local Setup
 
 1. **Clone the repository**:
