@@ -1,11 +1,10 @@
 # 📋 Rekap IPL Viewer
 
 > [!IMPORTANT]
-> **Looking for the modern, secure version?**
 > This branch (`main`) contains the legacy **Static Frontend** version. 
 > For the latest version featuring a **Secure Node.js Backend** and **Tigris Object Storage Caching**, please switch to the [**fly-object-storage**](https://github.com/veryresto/rekap-viewer/tree/fly-object-storage) branch.
 > 
-> [**View Architecture Evolution & Live Demo**](https://github.com/veryresto/rekap-viewer/tree/fly-object-storage#🏗️-architecture-evolution)
+> [**View Architecture Evolution & Live Demo**](https://github.com/veryresto/rekap-viewer/tree/fly-object-storage#%EF%B8%8F-architecture-evolution)
 
 ---
 
