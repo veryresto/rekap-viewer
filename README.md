@@ -1,5 +1,14 @@
 # 📋 Rekap IPL Viewer
 
+> [!IMPORTANT]
+> **Looking for the modern, secure version?**
+> This branch (`main`) contains the legacy **Static Frontend** version. 
+> For the latest version featuring a **Secure Node.js Backend** and **Tigris Object Storage Caching**, please switch to the [**fly-object-storage**](https://github.com/veryresto/rekap-viewer/tree/fly-object-storage) branch.
+> 
+> [**View Architecture Evolution & Live Demo**](https://github.com/veryresto/rekap-viewer/tree/fly-object-storage#🏗️-architecture-evolution)
+
+---
+
 A premium, mobile-friendly web application to visualize IPL (Iuran Pemeliharaan Lingkungan) payment data directly from Google Sheets. Built with pure HTML/CSS/JS for maximum performance and zero dependencies.
 
 ![UI Preview](https://via.placeholder.com/800x450.png?text=Rekap+IPL+Viewer+Preview) <!-- Replace with real screenshot if desired -->
