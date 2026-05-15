@@ -1,5 +1,8 @@
 # 📋 Rekap IPL Viewer
 
+> [!IMPORTANT]
+> **Work in Progress**: This project is currently undergoing a Multi-Region Experiment. See the [Multi-Region Spec](docs/spec-multi-region.md) for the active roadmap.
+
 A secure, high-performance web application to visualize IPL (Iuran Pemeliharaan Lingkungan) payment data. Now features a Node.js backend proxy that protects resident privacy by stripping sensitive information before it reaches the browser.
 
 <details>
@@ -42,11 +45,18 @@ This project serves as a hands-on exploration of **Fly.io** and operational best
 *   **Description**: Migrated to a Node.js backend on Fly.io. This allowed for secure secrets management (API keys hidden), custom domains, and better observability. I used this phase to gain operational experience with Fly Machines, request tracing, and failure scenario testing.
 *   **Branch**: [`fly-backend`](https://github.com/veryresto/rekap-viewer/tree/fly-backend)
 
-### Phase 3: Adding Caching Layer (Current)
+### Phase 3: Adding Caching Layer
 *   **Architecture**: `Browser → Fly Backend → Tigris Object Storage`
-*   **Status**: **Current**
+*   **Status**: Completed
 *   **Description**: Introduced a caching layer using **Tigris Object Storage** with a background refresh every 5 minutes. This decoupled user requests from Google Sheets latency, significantly reducing TTFB. Tigris was chosen over local storage to ensure a shared cache state across future multi-region deployments.
 *   **Branch**: [`fly-object-storage`](https://github.com/veryresto/rekap-viewer/tree/fly-object-storage)
+
+### Phase 4: Multi-Region Experiment
+*   **Architecture**: `Browser → Fly Edge → Multi-Region Compute (SIN/LHR) → Tigris`
+*   **Status**: **🚀 In Progress**
+*   **Description**: Scaling the compute layer to multiple geographic regions (Singapore and London) to minimize latency and observe Fly.io's regional routing behavior. 
+*   **Plan**: [spec-multi-region.md](docs/spec-multi-region.md)
+*   **Branch**: `fly-multi-region`
 
 ### 📊 Performance Insights & Benchmarking
 
