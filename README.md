@@ -2,6 +2,8 @@
 
 A secure, high-performance web application to visualize IPL (Iuran Pemeliharaan Lingkungan) payment data. Now features a Node.js backend proxy that protects resident privacy by stripping sensitive information before it reaches the browser.
 
+![UI Preview](mobile-sample.jpeg)
+
 ## ✨ Features
 
 - **Privacy-First**: Resident names ('Nama' column) are automatically stripped on the server side to ensure privacy.
