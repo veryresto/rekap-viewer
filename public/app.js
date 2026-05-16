@@ -465,9 +465,12 @@ async function checkAuth() {
         script.async = true;
         const encodedPayload = authData.publishableKey.split('_')[2].split('$')[0];
         const frontendApi = atob(encodedPayload).replace('$', '');
-        const subdomain = frontendApi.split('.')[0];
-        // Use the standard accounts.dev domain for the script as well for consistency
-        script.src = `https://${subdomain}.accounts.dev/v1/clerk.js`;
+        // Production keys have the full domain (clerk.veryresto.com), 
+        // Dev keys need the .accounts.dev suffix handled correctly
+        const isProduction = authData.publishableKey.startsWith('pk_live_');
+        const scriptDomain = isProduction ? frontendApi : `${frontendApi.split('.')[0]}.accounts.dev`;
+        
+        script.src = `https://${scriptDomain}/v1/clerk.js`;
         script.onload = async () => {
           await window.Clerk.load();
         };

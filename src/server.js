@@ -43,9 +43,11 @@ app.get('/health', (req, res) => {
 app.get('/api/me', (req, res) => {
     const { userId } = getAuth(req);
     
-    // Extract frontend API domain from publishable key if not provided
+    // Extract frontend API domain from publishable key
     let frontendApi = '';
+    let isProduction = false;
     if (process.env.CLERK_PUBLISHABLE_KEY) {
+        isProduction = process.env.CLERK_PUBLISHABLE_KEY.startsWith('pk_live_');
         const parts = process.env.CLERK_PUBLISHABLE_KEY.split('_');
         if (parts.length > 2) {
             const encodedPayload = parts[2].split('$')[0];
@@ -53,9 +55,28 @@ app.get('/api/me', (req, res) => {
         }
     }
 
-    const subdomain = frontendApi.split('.')[0];
-    const signInUrl = process.env.CLERK_SIGN_IN_URL || `https://${subdomain}.accounts.dev/sign-in`;
-    const signOutUrl = process.env.CLERK_SIGN_OUT_URL || `https://${subdomain}.accounts.dev/user`;
+    // Default Account Portal logic
+    let signInUrl = process.env.CLERK_SIGN_IN_URL;
+    let signOutUrl = process.env.CLERK_SIGN_OUT_URL;
+
+    if (!signInUrl) {
+        if (isProduction) {
+            // In production, user reported accounts. subdomain for Hosted Pages
+            signInUrl = `https://accounts.${frontendApi.split('.').slice(1).join('.')}/sign-in`;
+        } else {
+            const subdomain = frontendApi.split('.')[0];
+            signInUrl = `https://${subdomain}.accounts.dev/sign-in`;
+        }
+    }
+
+    if (!signOutUrl) {
+        if (isProduction) {
+            signOutUrl = `https://accounts.${frontendApi.split('.').slice(1).join('.')}/user`;
+        } else {
+            const subdomain = frontendApi.split('.')[0];
+            signOutUrl = `https://${subdomain}.accounts.dev/user`;
+        }
+    }
 
     if (!userId) {
         return res.json({ 
