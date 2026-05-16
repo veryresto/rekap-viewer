@@ -21,6 +21,10 @@
       <div class="subtitle">Data melalui server Rekap Viewer</div>
     </div>
     <div class="header-right">
+      <div id="auth-status" class="auth-status" hidden>
+        <span id="user-info"></span>
+        <button id="logout-btn" class="btn-text">Keluar</button>
+      </div>
       <span class="badge" id="row-count">Memuat…</span>
     </div>
   </header>
@@ -30,6 +34,15 @@
     <div id="status" class="loading" aria-live="polite">
       <div class="spinner" aria-hidden="true"></div>
       <span>Menghubungkan ke server…</span>
+    </div>
+
+    <div id="auth-overlay" class="auth-overlay" hidden>
+      <div class="auth-card">
+        <div class="auth-icon">🔐</div>
+        <h2>Akses Terbatas</h2>
+        <p>Silakan masuk untuk melihat data rekap pembayaran.</p>
+        <button id="login-btn" class="btn-primary">Masuk ke Kawan Identity</button>
+      </div>
     </div>
 
     <div class="filter-bar" id="filter-bar" role="search" aria-label="Filter berdasarkan Blok atau cari nomor">

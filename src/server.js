@@ -1,6 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
+const { clerkMiddleware, getAuth } = require('@clerk/express');
+const requireAuth = require('./middleware/requireAuth');
 const { uploadCache, readCache } = require('./storage');
 
 const app = express();
@@ -24,12 +26,48 @@ app.use((req, res, next) => {
     next();
 });
 
+// Clerk authentication middleware
+app.use(clerkMiddleware());
+
 // Static files
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // Health check
 app.get('/health', (req, res) => {
     res.status(200).json({ status: 'OK', timestamp: new Date().toISOString(), region: process.env.FLY_REGION });
+});
+
+/**
+ * Authentication check endpoint
+ */
+app.get('/api/me', (req, res) => {
+    const { userId } = getAuth(req);
+    
+    // Extract frontend API domain from publishable key if not provided
+    let frontendApi = '';
+    if (process.env.CLERK_PUBLISHABLE_KEY) {
+        const parts = process.env.CLERK_PUBLISHABLE_KEY.split('_');
+        if (parts.length > 2) {
+            const encodedPayload = parts[2].split('$')[0];
+            frontendApi = Buffer.from(encodedPayload, 'base64').toString('utf-8').replace('$', '');
+        }
+    }
+
+    const signInUrl = process.env.CLERK_SIGN_IN_URL || `https://${frontendApi}/sign-in`;
+    const signOutUrl = process.env.CLERK_SIGN_OUT_URL || `https://${frontendApi}/sign-out`;
+
+    if (!userId) {
+        return res.json({ 
+            authenticated: false,
+            signInUrl
+        });
+    }
+    res.json({
+        authenticated: true,
+        userId: userId,
+        status: 'pending',
+        signOutUrl
+    });
 });
 
 /**
@@ -101,7 +139,7 @@ async function refreshCache() {
 }
 
 // API endpoint serving from cache
-app.get('/api/rekap', async (req, res) => {
+app.get('/api/rekap', requireAuth, async (req, res) => {
     try {
         const cache = await readCache();
         

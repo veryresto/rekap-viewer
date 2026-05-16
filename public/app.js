@@ -13,6 +13,11 @@ const containerEl = document.getElementById("table-container");
 const theadEl = document.getElementById("thead");
 const tbodyEl = document.getElementById("tbody");
 const rowCountEl = document.getElementById("row-count");
+const authOverlayEl = document.getElementById("auth-overlay");
+const authStatusEl = document.getElementById("auth-status");
+const userInfoEl = document.getElementById("user-info");
+const loginBtn = document.getElementById("login-btn");
+const logoutBtn = document.getElementById("logout-btn");
 
 // ── PANEL COLLAPSE STATE ─────────────────────────────────────────────────
 let isCollapsed = false;   // whether Nama/Blok are hidden by user toggle
@@ -408,6 +413,11 @@ async function loadData() {
   showLoading();
   try {
     const res = await fetch("/api/rekap");
+    if (res.status === 401) {
+      hideLoading();
+      showLoginRequired();
+      return;
+    }
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({}));
       throw new Error(errorData?.error || "Gagal memuat data (HTTP " + res.status + ")");
@@ -427,4 +437,57 @@ async function loadData() {
   }
 }
 
-loadData();
+// ── AUTHENTICATION ───────────────────────────────────────────────────────
+function showLoginRequired() {
+  authOverlayEl.hidden = false;
+  filterBarEl.style.display = "none";
+  containerEl.style.display = "none";
+  rowCountEl.textContent = "Terbatas";
+}
+
+let authData = null;
+
+async function checkAuth() {
+  try {
+    const res = await fetch("/api/me");
+    authData = await res.json();
+    if (authData.authenticated) {
+      authStatusEl.hidden = false;
+      userInfoEl.textContent = "ID: " + authData.userId.slice(0, 8) + "...";
+      return true;
+    }
+    return false;
+  } catch (err) {
+    console.error("[auth] Check failed:", err);
+    return false;
+  }
+}
+
+async function init() {
+  const isAuthenticated = await checkAuth();
+  
+  if (isAuthenticated) {
+    loadData();
+  } else {
+    showLoginRequired();
+  }
+
+  // Bind buttons
+  if (loginBtn) {
+    loginBtn.addEventListener("click", () => {
+      if (authData && authData.signInUrl) {
+        window.location.href = authData.signInUrl + "?redirect_url=" + encodeURIComponent(window.location.origin);
+      }
+    });
+  }
+
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+      if (authData && authData.signOutUrl) {
+        window.location.href = authData.signOutUrl + "?redirect_url=" + encodeURIComponent(window.location.origin);
+      }
+    });
+  }
+}
+
+init();
