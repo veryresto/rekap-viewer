@@ -453,7 +453,24 @@ async function checkAuth() {
     authData = await res.json();
     if (authData.authenticated) {
       authStatusEl.hidden = false;
+      authOverlayEl.hidden = true;
+      filterBarEl.style.display = "";
+      containerEl.style.display = "";
       userInfoEl.textContent = "ID: " + authData.userId.slice(0, 8) + "...";
+
+      // Load Clerk JS SDK for logout functionality
+      if (!window.Clerk && authData.publishableKey) {
+        const script = document.createElement('script');
+        script.setAttribute('data-clerk-publishable-key', authData.publishableKey);
+        script.async = true;
+        const encodedPayload = authData.publishableKey.split('_')[2].split('$')[0];
+        const frontendApi = atob(encodedPayload).replace('$', '');
+        script.src = `https://${frontendApi}/v1/clerk.js`;
+        script.onload = async () => {
+          await window.Clerk.load();
+        };
+        document.body.appendChild(script);
+      }
       return true;
     }
     return false;
@@ -482,8 +499,11 @@ async function init() {
   }
 
   if (logoutBtn) {
-    logoutBtn.addEventListener("click", () => {
-      if (authData && authData.signOutUrl) {
+    logoutBtn.addEventListener("click", async () => {
+      if (window.Clerk) {
+        await window.Clerk.signOut();
+        window.location.reload();
+      } else if (authData && authData.signOutUrl) {
         window.location.href = authData.signOutUrl + "?redirect_url=" + encodeURIComponent(window.location.origin);
       }
     });

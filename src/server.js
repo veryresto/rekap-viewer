@@ -67,7 +67,8 @@ app.get('/api/me', (req, res) => {
         authenticated: true,
         userId: userId,
         status: 'pending',
-        signOutUrl
+        signOutUrl,
+        publishableKey: process.env.CLERK_PUBLISHABLE_KEY
     });
 });
 
