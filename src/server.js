@@ -53,8 +53,9 @@ app.get('/api/me', (req, res) => {
         }
     }
 
-    const signInUrl = process.env.CLERK_SIGN_IN_URL || `https://${frontendApi}/sign-in`;
-    const signOutUrl = process.env.CLERK_SIGN_OUT_URL || `https://${frontendApi}/sign-out`;
+    const subdomain = frontendApi.split('.')[0];
+    const signInUrl = process.env.CLERK_SIGN_IN_URL || `https://${subdomain}.accounts.dev/sign-in`;
+    const signOutUrl = process.env.CLERK_SIGN_OUT_URL || `https://${subdomain}.accounts.dev/sign-out`;
 
     if (!userId) {
         return res.json({ 
