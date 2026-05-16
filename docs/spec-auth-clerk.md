@@ -9,7 +9,9 @@ The goal is:
 * protect `/api/rekap`
 * require login before viewing payment data
 * centralize authentication using Clerk
-* use `kawan.veryresto.com` as Clerk custom auth domain
+* use `clerk.veryresto.com` as Clerk Frontend API domain
+* use `accounts.veryresto.com` as Clerk Account Portal (Hosted Pages)
+* use `rekap-auth.veryresto.com` as the application domain
 * keep frontend minimal
 * prepare for future multi-app SSO
 
@@ -43,16 +45,14 @@ Important:
 # Authentication Architecture
 
 ## Domains
+### Production
+* **Application**: `rekap-auth.veryresto.com`
+* **Clerk Frontend API**: `clerk.veryresto.com`
+* **Clerk Account Portal**: `accounts.veryresto.com` (Hosted Pages)
 
-Production target:
-
-* app: `rekap.sakura3.id`
-* auth domain: `kawan.sakura3.id`
-
-Current testing:
-
-* app: `rekap.veryresto.com`
-* auth domain: `kawan.veryresto.com`
+### Local Development
+* **Application**: `localhost:3000`
+* **Clerk Domain**: Default Clerk dev domain (e.g. `*.accounts.dev`)
 
 ---
 
@@ -95,10 +95,10 @@ Agent should:
 Add support for:
 
 ```env
-CLERK_SECRET_KEY=
-CLERK_PUBLISHABLE_KEY=
-CLERK_SIGN_IN_URL=https://kawan.veryresto.com/sign-in
-CLERK_SIGN_UP_URL=https://kawan.veryresto.com/sign-up
+CLERK_SECRET_KEY=sk_live_...
+CLERK_PUBLISHABLE_KEY=pk_live_...
+CLERK_SIGN_IN_URL=https://accounts.veryresto.com/sign-in
+CLERK_SIGN_UP_URL=https://accounts.veryresto.com/sign-up
 ```
 
 Ensure:
@@ -132,6 +132,10 @@ Add Clerk middleware globally.
 Protect:
 
 * `/api/rekap`
+
+Add Lightweight Check:
+
+* `/api/me`: Returns `{ authenticated: boolean, userId?: string, signInUrl: string, signOutUrl: string }`
 
 Example behavior:
 
@@ -183,7 +187,7 @@ Display:
 Example button action:
 
 ```txt
-https://kawan.veryresto.com/sign-in?redirect_url=https://rekap.veryresto.com
+https://accounts.veryresto.com/sign-in?redirect_url=https://rekap-auth.veryresto.com
 ```
 
 ---
@@ -201,11 +205,16 @@ If authenticated:
 
 Add optional logout button.
 
-Logout target:
+Logout target (fallback if SDK not loaded):
 
 ```txt
-https://kawan.veryresto.com/sign-out
+https://accounts.veryresto.com/user
 ```
+
+Logout implementation:
+
+* Use `window.Clerk.signOut()` for silent logout if script is loaded.
+* Fallback to `/user` profile page.
 
 ---
 
