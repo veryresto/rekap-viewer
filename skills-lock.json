@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "clerk-cli": {
+      "source": "/var/folders/x5/zpdv7rbs1r5gtgq4d3x2h8fm0000gn/T/clerk-cli-skill-8YgbIb",
+      "sourceType": "local",
+      "computedHash": "e26ab4ecc55aab517ad9e1224afb857a961304ddedaa454ec8b158705586ee08"
+    }
+  }
+}
