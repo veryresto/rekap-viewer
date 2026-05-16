@@ -465,7 +465,9 @@ async function checkAuth() {
         script.async = true;
         const encodedPayload = authData.publishableKey.split('_')[2].split('$')[0];
         const frontendApi = atob(encodedPayload).replace('$', '');
-        script.src = `https://${frontendApi}/v1/clerk.js`;
+        const subdomain = frontendApi.split('.')[0];
+        // Use the standard accounts.dev domain for the script as well for consistency
+        script.src = `https://${subdomain}.accounts.dev/v1/clerk.js`;
         script.onload = async () => {
           await window.Clerk.load();
         };

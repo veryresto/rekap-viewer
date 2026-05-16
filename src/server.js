@@ -55,7 +55,7 @@ app.get('/api/me', (req, res) => {
 
     const subdomain = frontendApi.split('.')[0];
     const signInUrl = process.env.CLERK_SIGN_IN_URL || `https://${subdomain}.accounts.dev/sign-in`;
-    const signOutUrl = process.env.CLERK_SIGN_OUT_URL || `https://${subdomain}.accounts.dev/sign-out`;
+    const signOutUrl = process.env.CLERK_SIGN_OUT_URL || `https://${subdomain}.accounts.dev/user`;
 
     if (!userId) {
         return res.json({ 
