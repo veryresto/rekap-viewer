@@ -46,9 +46,12 @@ Important:
 
 ## Domains
 ### Production
-* **Application**: `rekap-auth.veryresto.com`
-* **Clerk Frontend API**: `clerk.veryresto.com`
-* **Clerk Account Portal**: `accounts.veryresto.com` (Hosted Pages)
+* **Application URL**: `rekap-auth.veryresto.com`
+* **Frontend API Domain**: `clerk.veryresto.com` (Used for `clerk.js` and session cookies)
+* **Account Portal URL**: `accounts.veryresto.com` (Used for Sign-in, Sign-up, and User Profile pages)
+
+> [!IMPORTANT]
+> The app and auth domains should share the same primary domain (`veryresto.com`) to avoid cross-domain cookie restrictions and redirect security blocks.
 
 ### Local Development
 * **Application**: `localhost:3000`
@@ -173,6 +176,10 @@ Keep:
 * existing rendering flow
 * existing table rendering
 
+Style Requirements:
+
+* Must include `[hidden] { display: none !important; }` in global CSS. This prevents layout rules (like `display: flex`) from overriding the `hidden` attribute used to toggle auth-related UI.
+
 ---
 
 # Unauthorized State
@@ -205,16 +212,13 @@ If authenticated:
 
 Add optional logout button.
 
-Logout target (fallback if SDK not loaded):
+Logout Strategy:
 
-```txt
-https://accounts.veryresto.com/user
-```
+* **Primary**: Load the Clerk JS SDK dynamically and use `window.Clerk.signOut()` for a clean session termination.
+* **Fallback**: If the SDK is not loaded, redirect to the Account Portal User Profile page (`/user`), which contains a manual sign-out option.
 
-Logout implementation:
-
-* Use `window.Clerk.signOut()` for silent logout if script is loaded.
-* Fallback to `/user` profile page.
+> [!NOTE]
+> There is no direct `/sign-out` page in the Clerk Account Portal; sign-out must be handled via SDK or the profile page.
 
 ---
 
@@ -234,18 +238,14 @@ Prefer:
 
 ---
 
-# Fly.io Requirements
+## Deployment Pre-flight Checklist
 
-Document:
+Before going live, ensure the following are configured in the Clerk Dashboard:
 
-* required Fly secrets
-* required app restart commands
-* required DNS setup
-
-Ensure:
-
-* HTTPS enforced
-* Clerk works behind Fly.io deployment
+1.  **Account Portal**: Set to **"On"**.
+2.  **Home URL**: Set to `https://rekap-auth.veryresto.com`.
+3.  **Allowed Redirects**: Add `https://rekap-auth.veryresto.com` to the whitelist.
+4.  **Domain Verification**: Ensure DNS CNAME records are verified and SSL is issued for all subdomains.
 
 ---
 
