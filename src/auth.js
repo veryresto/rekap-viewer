@@ -17,7 +17,10 @@ function getSupabase() {
         if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
             throw new Error('SUPABASE_URL and SUPABASE_ANON_KEY are required');
         }
-        supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: { persistSession: false },
+            global: { WebSocket: require('ws') }
+        });
     }
     return supabase;
 }
