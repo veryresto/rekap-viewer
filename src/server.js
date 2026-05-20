@@ -2,8 +2,11 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const { uploadCache, readCache } = require('./storage');
+const { requireAuth, requireApprovedResident } = require('./middleware/auth');
 
 const app = express();
+app.set('trust proxy', true); // Ensure req.protocol correctly reflects HTTPS behind Fly.io proxy
+
 const PORT = process.env.PORT || 3000;
 const HOST = '0.0.0.0';
 
@@ -24,13 +27,26 @@ app.use((req, res, next) => {
     next();
 });
 
-// Static files
-app.use(express.static(path.join(__dirname, '..', 'public')));
-
-// Health check
+// Health check (Public)
 app.get('/health', (req, res) => {
     res.status(200).json({ status: 'OK', timestamp: new Date().toISOString(), region: process.env.FLY_REGION });
 });
+
+// Auth Denied Page (Public)
+app.get('/auth-denied', (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    res.sendFile(path.join(__dirname, '..', 'public', 'auth-denied.html'));
+});
+
+// Protected main entry point
+app.get('/', requireAuth, requireApprovedResident, (req, res) => {
+    res.set('Cache-Control', 'no-store'); // Do not cache authenticated views
+    res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+});
+
+// Static assets (CSS, JS, etc. - Cacheable, no sensitive data)
+app.use(express.static(path.join(__dirname, '..', 'public')));
+
 
 /**
  * Fetch and process data from Google Sheets
@@ -101,7 +117,7 @@ async function refreshCache() {
 }
 
 // API endpoint serving from cache
-app.get('/api/rekap', async (req, res) => {
+app.get('/api/rekap', requireAuth, requireApprovedResident, async (req, res) => {
     try {
         const cache = await readCache();
         
