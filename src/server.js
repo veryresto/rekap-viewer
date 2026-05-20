@@ -3,6 +3,7 @@ const express = require('express');
 const path = require('path');
 const { uploadCache, readCache } = require('./storage');
 const { requireAuth, requireApprovedResident } = require('./middleware/auth');
+const { extractSessionFromCookieHeader, globalLogout } = require('./auth');
 
 const app = express();
 app.set('trust proxy', true); // Ensure req.protocol correctly reflects HTTPS behind Fly.io proxy
@@ -53,6 +54,22 @@ app.get('/api/me', requireAuth, requireApprovedResident, (req, res) => {
         name: user.user_metadata?.full_name || user.email.split('@')[0],
         avatar_url: user.user_metadata?.avatar_url || null
     });
+});
+
+app.post('/api/logout', async (req, res) => {
+    const cookieHeader = req.headers.cookie;
+    const session = extractSessionFromCookieHeader(cookieHeader);
+    
+    if (session && session.access_token) {
+        await globalLogout(session.access_token);
+    }
+    
+    const hostname = req.hostname;
+    const domain = hostname.endsWith('.localtest.me') ? '.localtest.me' : 
+                   hostname.endsWith('.veryresto.com') ? '.veryresto.com' : hostname;
+    
+    res.clearCookie('veryresto-auth', { domain: domain, path: '/' });
+    res.json({ success: true });
 });
 
 // Static assets (CSS, JS, etc. - Cacheable, no sensitive data)

@@ -473,13 +473,15 @@ function initUserDropdown() {
     }
   });
   
-  signoutBtn.addEventListener("click", () => {
-    // Clear veryresto-auth cookie from the domain
-    document.cookie = "veryresto-auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    // Also try clearing with the root domain in case it was set there
-    document.cookie = "veryresto-auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname;
+  signoutBtn.addEventListener("click", async () => {
+    try {
+      // Call the backend endpoint to log out globally from Supabase and clear the cookie
+      await fetch('/api/logout', { method: 'POST' });
+    } catch (e) {
+      console.error('Logout request failed:', e);
+    }
     
-    // Determine the portal URL based on the environment (similar to file-finder-sr3)
+    // Determine the portal URL based on the environment
     const isLocal = window.location.hostname.endsWith('.localtest.me') || 
                     window.location.hostname.endsWith('.lvh.me') || 
                     window.location.hostname === 'localhost';

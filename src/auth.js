@@ -109,9 +109,29 @@ function buildPortalRedirectUrl(currentUrl) {
     }
 }
 
+async function globalLogout(accessToken) {
+    if (!accessToken) return;
+    try {
+        const url = `${SUPABASE_URL}/auth/v1/logout?scope=global`;
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${accessToken}`
+            }
+        });
+        if (!res.ok) {
+            console.error('Global logout failed:', await res.text());
+        }
+    } catch (e) {
+        console.error('Error during global logout:', e.message);
+    }
+}
+
 module.exports = {
     extractSessionFromCookieHeader,
     verifyJwt,
     fetchApprovalStatus,
-    buildPortalRedirectUrl
+    buildPortalRedirectUrl,
+    globalLogout
 };
