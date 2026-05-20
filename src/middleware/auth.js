@@ -72,6 +72,13 @@ async function requireApprovedResident(req, res, next) {
     
     const status = await fetchApprovalStatus(req.user.id);
     
+    console.log('[AUTH]', {
+        userId: req.user.id,
+        authResult: 'success', // At this stage, JWT verification has succeeded
+        approvalStatus: status,
+        route: req.originalUrl
+    });
+    
     if (status === 'approved') {
         return next();
     }
