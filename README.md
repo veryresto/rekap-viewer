@@ -11,6 +11,7 @@ A secure, high-performance web application to visualize IPL (Iuran Pemeliharaan 
 
 - **Privacy-First**: Resident names ('Nama' column) are automatically stripped on the server side to ensure privacy.
 - **Secure Proxy**: Uses a Node.js/Express backend to fetch Google Sheets data, keeping your API keys and Spreadsheet IDs hidden from the public.
+- **Ecosystem Authentication**: Integrates seamlessly with the Veryresto community platform, sharing session state via JWT cookies and providing a unified global sign-out experience. Includes a modern, responsive user profile dropdown.
 - **Sticky UI Layout**: 
   - Sticky table headers (top-frozen).
   - Sticky identity columns (Blok, Nomor) and Year Summary columns (frozen on horizontal scroll).
@@ -78,6 +79,9 @@ To validate the architecture, I benchmarked the app from multiple locations usin
      ```env
      GOOGLE_API_KEY=your_google_api_key
      SHEET_ID=your_spreadsheet_id
+     SUPABASE_URL=your_supabase_url
+     SUPABASE_ANON_KEY=your_supabase_anon_key
+     PORTAL_URL=http://community.localtest.me:5137
      PORT=3000
      ```
 
