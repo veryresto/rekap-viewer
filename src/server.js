@@ -44,6 +44,17 @@ app.get('/', requireAuth, requireApprovedResident, (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
+// User profile endpoint
+app.get('/api/me', requireAuth, requireApprovedResident, (req, res) => {
+    const user = req.user;
+    res.json({
+        id: user.id,
+        email: user.email,
+        name: user.user_metadata?.full_name || user.email.split('@')[0],
+        avatar_url: user.user_metadata?.avatar_url || null
+    });
+});
+
 // Static assets (CSS, JS, etc. - Cacheable, no sensitive data)
 app.use(express.static(path.join(__dirname, '..', 'public')));
 

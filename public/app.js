@@ -427,4 +427,72 @@ async function loadData() {
   }
 }
 
+// ── USER PROFILE ─────────────────────────────────────────────────────────
+async function fetchUser() {
+  try {
+    const res = await fetch("/api/me");
+    if (res.ok) {
+      const user = await res.json();
+      
+      const initials = (user.name ? user.name.substring(0, 2) : user.email.substring(0, 2)).toUpperCase();
+      document.getElementById("user-initials").textContent = initials;
+      document.getElementById("user-initials-large").textContent = initials;
+      
+      document.getElementById("user-name").textContent = user.name || user.email;
+      document.getElementById("user-email").textContent = user.email;
+      
+      if (user.avatar_url) {
+        document.getElementById("user-avatar-btn").innerHTML = `<img src="${user.avatar_url}" alt="Avatar" />`;
+        document.getElementById("user-avatar-large").innerHTML = `<img src="${user.avatar_url}" alt="Avatar" />`;
+      }
+    }
+  } catch (err) {
+    console.error("[rekap] User profile error:", err);
+  }
+}
+
+// ── DROPDOWN & LOGOUT EVENTS ──────────────────────────────────────────────
+function initUserDropdown() {
+  const btn = document.getElementById("user-menu-btn");
+  const dropdown = document.getElementById("user-dropdown");
+  const signoutBtn = document.getElementById("sign-out-btn");
+  
+  if (!btn || !dropdown) return;
+  
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const isExpanded = btn.getAttribute("aria-expanded") === "true";
+    btn.setAttribute("aria-expanded", !isExpanded);
+    dropdown.classList.toggle("show");
+  });
+  
+  document.addEventListener("click", (e) => {
+    if (!dropdown.contains(e.target) && e.target !== btn) {
+      dropdown.classList.remove("show");
+      btn.setAttribute("aria-expanded", "false");
+    }
+  });
+  
+  signoutBtn.addEventListener("click", () => {
+    // Clear veryresto-auth cookie from the domain
+    document.cookie = "veryresto-auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    // Also try clearing with the root domain in case it was set there
+    document.cookie = "veryresto-auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname;
+    
+    // Determine the portal URL based on the environment (similar to file-finder-sr3)
+    const isLocal = window.location.hostname.endsWith('.localtest.me') || 
+                    window.location.hostname.endsWith('.lvh.me') || 
+                    window.location.hostname === 'localhost';
+    
+    const portalUrl = isLocal 
+      ? 'http://community.localtest.me:5173'
+      : 'https://community.veryresto.com';
+      
+    window.location.href = portalUrl;
+  });
+}
+
+fetchUser();
+initUserDropdown();
 loadData();
+

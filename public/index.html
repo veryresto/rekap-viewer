@@ -22,6 +22,31 @@
     </div>
     <div class="header-right">
       <span class="badge" id="row-count">Memuat…</span>
+      
+      <div class="user-dropdown-container">
+        <button id="user-menu-btn" class="user-menu-btn" aria-expanded="false" aria-haspopup="true" aria-label="User menu">
+          <div class="avatar" id="user-avatar-btn">
+            <span id="user-initials">U</span>
+          </div>
+        </button>
+        
+        <div id="user-dropdown" class="user-dropdown">
+          <div class="user-dropdown-header">
+            <div class="avatar avatar-large" id="user-avatar-large">
+              <span id="user-initials-large">U</span>
+            </div>
+            <div class="user-info-text">
+              <p class="user-name" id="user-name">User</p>
+              <p class="user-email" id="user-email">Loading...</p>
+            </div>
+          </div>
+          <div class="dropdown-separator"></div>
+          <button id="sign-out-btn" class="dropdown-item text-destructive">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" x2="9" y1="12" y2="12"></line></svg>
+            Sign out
+          </button>
+        </div>
+      </div>
     </div>
   </header>
 
