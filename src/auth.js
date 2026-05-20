@@ -19,7 +19,7 @@ function getSupabase() {
         }
         supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
             auth: { persistSession: false },
-            global: { WebSocket: require('ws') }
+            realtime: { transport: require('ws') }
         });
     }
     return supabase;
