@@ -69,6 +69,12 @@ body {
   margin-top: 2px;
 }
 
+.app-header .sync-time {
+  font-size: 0.65rem;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
 .header-right {
   display: flex;
   align-items: center;

@@ -3,6 +3,11 @@ const { S3Client, PutObjectCommand, GetObjectCommand } = require('@aws-sdk/clien
 const BUCKET_NAME = process.env.BUCKET_NAME;
 const CACHE_KEY = 'rekap-cache.json';
 
+// In-process cache variables to minimize Tigris object storage API reads
+let localMemoryCache = null;
+let cacheExpiresAt = 0;
+const MEMORY_CACHE_TTL_MS = 30 * 1000; // 30 seconds
+
 const s3Client = new S3Client({
     region: process.env.AWS_REGION || 'auto',
     endpoint: process.env.AWS_ENDPOINT_URL_S3 || 'https://fly.storage.tigris.dev',
@@ -30,6 +35,11 @@ async function uploadCache(data) {
         const start = Date.now();
         await s3Client.send(command);
         const duration = Date.now() - start;
+
+        // Update in-memory cache immediately to stay hot and consistent
+        localMemoryCache = data;
+        cacheExpiresAt = Date.now() + MEMORY_CACHE_TTL_MS;
+
         return { success: true, duration };
     } catch (error) {
         console.error('Tigris Upload Error:', error);
@@ -46,6 +56,11 @@ async function readCache() {
         throw new Error('BUCKET_NAME environment variable is not set');
     }
 
+    // Check if valid in-memory cache exists
+    if (localMemoryCache && Date.now() < cacheExpiresAt) {
+        return localMemoryCache;
+    }
+
     const command = new GetObjectCommand({
         Bucket: BUCKET_NAME,
         Key: CACHE_KEY,
@@ -54,12 +69,23 @@ async function readCache() {
     try {
         const response = await s3Client.send(command);
         const bodyContents = await streamToString(response.Body);
-        return JSON.parse(bodyContents);
+        const parsed = JSON.parse(bodyContents);
+
+        // Update in-memory cache
+        localMemoryCache = parsed;
+        cacheExpiresAt = Date.now() + MEMORY_CACHE_TTL_MS;
+
+        return parsed;
     } catch (error) {
         if (error.name === 'NoSuchKey') {
             return null;
         }
         console.error('Tigris Read Error:', error);
+        // Fallback to stale in-memory cache if S3 is down
+        if (localMemoryCache) {
+            console.log('Serving stale in-memory cache due to S3 read failure');
+            return localMemoryCache;
+        }
         throw error;
     }
 }

@@ -12,6 +12,30 @@ const ALLOWED_RETURN_ORIGINS = [
 
 let supabase = null;
 
+// Multi-level in-process cache with TTL for auth performance and rate limit prevention
+const jwtCache = new Map();
+const approvalCache = new Map();
+const CACHE_TTL_MS = 45 * 1000; // 45 seconds
+
+// Periodically clean up expired cache entries to prevent memory growth
+const cleanupTimer = setInterval(() => {
+    const now = Date.now();
+    for (const [key, val] of jwtCache.entries()) {
+        if (now >= val.expiresAt) {
+            jwtCache.delete(key);
+        }
+    }
+    for (const [key, val] of approvalCache.entries()) {
+        if (now >= val.expiresAt) {
+            approvalCache.delete(key);
+        }
+    }
+}, 10 * 60 * 1000); // every 10 minutes
+
+if (typeof cleanupTimer.unref === 'function') {
+    cleanupTimer.unref();
+}
+
 function getSupabase() {
     if (!supabase) {
         if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
@@ -50,6 +74,11 @@ function extractSessionFromCookieHeader(cookieHeader) {
 async function verifyJwt(accessToken) {
     if (!accessToken) return null;
     
+    const cached = jwtCache.get(accessToken);
+    if (cached && Date.now() < cached.expiresAt) {
+        return cached.user;
+    }
+    
     try {
         const client = getSupabase();
         const { data, error } = await client.auth.getUser(accessToken);
@@ -57,6 +86,11 @@ async function verifyJwt(accessToken) {
         if (error || !data?.user) {
             return null;
         }
+        
+        jwtCache.set(accessToken, {
+            user: data.user,
+            expiresAt: Date.now() + CACHE_TTL_MS
+        });
         
         return data.user;
     } catch (e) {
@@ -69,6 +103,11 @@ async function verifyJwt(accessToken) {
 // Returns 'approved' | 'rejected' | 'suspended' | 'pending' | null.
 async function fetchApprovalStatus(userId) {
     if (!userId) return null;
+    
+    const cached = approvalCache.get(userId);
+    if (cached && Date.now() < cached.expiresAt) {
+        return cached.status;
+    }
     
     try {
         const client = getSupabase();
@@ -83,7 +122,15 @@ async function fetchApprovalStatus(userId) {
             return null;
         }
         
-        return data?.approval_status || null;
+        const status = data?.approval_status || null;
+        if (status) {
+            approvalCache.set(userId, {
+                status: status,
+                expiresAt: Date.now() + CACHE_TTL_MS
+            });
+        }
+        
+        return status;
     } catch (e) {
         console.error('Error fetching approval status:', e.message);
         return null;

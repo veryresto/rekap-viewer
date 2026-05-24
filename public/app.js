@@ -13,6 +13,7 @@ const containerEl = document.getElementById("table-container");
 const theadEl = document.getElementById("thead");
 const tbodyEl = document.getElementById("tbody");
 const rowCountEl = document.getElementById("row-count");
+const syncTimeEl = document.getElementById("sync-time");
 
 // ── PANEL COLLAPSE STATE ─────────────────────────────────────────────────
 let isCollapsed = false;   // whether Nama/Blok are hidden by user toggle
@@ -404,6 +405,31 @@ function render(rows) {
 }
 
 // ── FETCH & PARSE ────────────────────────────────────────────────────────
+function displaySyncTime(isoString) {
+  if (!syncTimeEl) return;
+  if (!isoString) {
+    syncTimeEl.textContent = "";
+    return;
+  }
+  try {
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) {
+      syncTimeEl.textContent = "";
+      return;
+    }
+    const day = String(d.getDate()).padStart(2, '0');
+    const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
+    const month = months[d.getMonth()];
+    const year = d.getFullYear();
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    syncTimeEl.textContent = `Sinkronisasi terakhir: ${day} ${month} ${year} ${hours}:${minutes}`;
+  } catch (e) {
+    console.error("[rekap] Error formatting sync time:", e);
+    syncTimeEl.textContent = "";
+  }
+}
+
 async function loadData() {
   showLoading();
   try {
@@ -412,6 +438,11 @@ async function loadData() {
       const errorData = await res.json().catch(() => ({}));
       throw new Error(errorData?.error || "Gagal memuat data (HTTP " + res.status + ")");
     }
+
+    // Extract last update timestamp from headers
+    const syncTimeHeader = res.headers.get("X-Cache-Updated-At");
+    displaySyncTime(syncTimeHeader);
+
     const data = await res.json();
     hideLoading();
 

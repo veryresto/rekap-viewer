@@ -100,16 +100,23 @@ async function fetchGoogleSheetsData() {
 
         const data = await response.json();
         
-        // Filter out index 2 (Nama) if values exist
-        if (data.values && Array.isArray(data.values)) {
-            data.values = data.values.map(row => {
-                if (row.length > 2) {
-                    const newRow = [...row];
-                    newRow.splice(2, 1); // Remove 3rd element (index 2)
-                    return newRow;
-                }
-                return row;
-            });
+        // Scan header row (index 0) to dynamically locate "Nama" column
+        if (data.values && Array.isArray(data.values) && data.values.length > 0) {
+            const headerRow = data.values[0];
+            const namaIdx = headerRow.findIndex(cell => typeof cell === 'string' && cell.trim() === 'Nama');
+            
+            if (namaIdx !== -1) {
+                data.values = data.values.map(row => {
+                    if (row.length > namaIdx) {
+                        const newRow = [...row];
+                        newRow.splice(namaIdx, 1); // Remove "Nama" column from row
+                        return newRow;
+                    }
+                    return row;
+                });
+            } else {
+                console.warn('[WARN] "Nama" column not found in Google Sheets header. No dynamic splicing performed.');
+            }
         }
         return data;
     } catch (error) {
