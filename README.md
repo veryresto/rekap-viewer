@@ -1,14 +1,6 @@
 # 📋 Rekap IPL Viewer
 
-> [!IMPORTANT]
-> This branch (`main`) contains the legacy **Static Frontend** version. 
-> For the latest version featuring a **Secure Node.js Backend** and **Tigris Object Storage Caching**, please switch to the [**fly-object-storage**](https://github.com/veryresto/rekap-viewer/tree/fly-object-storage) branch.
-> 
-> [**View Architecture Evolution & Live Demo**](https://github.com/veryresto/rekap-viewer/tree/fly-object-storage#%EF%B8%8F-architecture-evolution)
-
----
-
-A premium, mobile-friendly web application to visualize IPL (Iuran Pemeliharaan Lingkungan) payment data directly from Google Sheets. Built with pure HTML/CSS/JS for maximum performance and zero dependencies.
+A secure, high-performance web application to visualize IPL (Iuran Pemeliharaan Lingkungan) payment data. Now features a Node.js backend proxy that protects resident privacy by stripping sensitive information before it reaches the browser.
 
 <details>
   <summary>📸 View UI Preview</summary>
@@ -17,11 +9,55 @@ A premium, mobile-friendly web application to visualize IPL (Iuran Pemeliharaan 
 
 ## ✨ Features
 
-- **Live Sync**: Automatically fetches data from your Google Sheet using the Sheets API v4.
-- **Sticky Layout**: Header and key identification columns (Blok, Nama, Nomor) stay frozen for easy tracking.
-- **Collapsible Nama**: Toggle the 'Nama' and 'Blok' columns to maximize visible data on smaller screens.
-- **Mobile Optimized**: Auto-collapses on small screens and supports smooth horizontal scrolling.
-- **Premium Aesthetics**: Modern typography, a deep blue professional palette, and subtle micro-animations.
+- **Privacy-First**: Resident names ('Nama' column) are automatically stripped on the server side to ensure privacy.
+- **Secure Proxy**: Uses a Node.js/Express backend to fetch Google Sheets data, keeping your API keys and Spreadsheet IDs hidden from the public.
+- **Ecosystem Authentication**: Integrates seamlessly with the Veryresto community platform, sharing session state via JWT cookies and providing a unified global sign-out experience. Includes a modern, responsive user profile dropdown.
+- **Sticky UI Layout**: 
+  - Sticky table headers (top-frozen).
+  - Sticky identity columns (Blok, Nomor) and Year Summary columns (frozen on horizontal scroll).
+- **Mobile Optimized**: Auto-collapses columns on small screens and features a collapsible filter bar.
+- **Visual Analytics**: Instant calculation of yearly payment status (e.g., "12/12") with color-coded highlighting.
+
+---
+
+## Live Demo
+
+- **Fly Domain**: [rekap-viewer.fly.dev](https://rekap-viewer.fly.dev/)
+- **Custom Domain**: [rekap.veryresto.com](https://rekap.veryresto.com/)
+
+---
+
+## 🏗️ Architecture Evolution
+
+This project serves as a hands-on exploration of **Fly.io** and operational best practices. It evolved from a simple static site into a cached backend architecture to address practical challenges like credential security, request latency, and state-sharing in distributed environments.
+
+### Phase 1: Static Frontend (The Beginning)
+*   **Architecture**: `Browser → Google Sheets API`
+*   **Status**: Legacy (Proof of Concept)
+*   **Description**: Originally a static frontend hosted on Netlify. While functional, it exposed the Spreadsheet ID and Google API Key in the client-side code. Performance was directly coupled to Google Sheets API latency.
+*   **Branch**: [`main`](https://github.com/veryresto/rekap-viewer/tree/main)
+
+### Phase 2: Secure Proxy (Node.js + Fly.io)
+*   **Architecture**: `Browser → Fly Backend → Google Sheets API`
+*   **Status**: Intermediate
+*   **Description**: Migrated to a Node.js backend on Fly.io. This allowed for secure secrets management (API keys hidden), custom domains, and better observability. I used this phase to gain operational experience with Fly Machines, request tracing, and failure scenario testing.
+*   **Branch**: [`fly-backend`](https://github.com/veryresto/rekap-viewer/tree/fly-backend)
+
+### Phase 3: Adding Caching Layer (Current)
+*   **Architecture**: `Browser → Fly Backend → Tigris Object Storage`
+*   **Status**: **Current**
+*   **Description**: Introduced a caching layer using **Tigris Object Storage** with a background refresh every 5 minutes. This decoupled user requests from Google Sheets latency, significantly reducing TTFB. Tigris was chosen over local storage to ensure a shared cache state across future multi-region deployments.
+*   **Branch**: [`fly-object-storage`](https://github.com/veryresto/rekap-viewer/tree/fly-object-storage)
+
+### 📊 Performance Insights & Benchmarking
+
+To validate the architecture, I benchmarked the app from multiple locations using `curl` timing metrics.
+
+*   **Key Finding**: Requests entering via Fly's London edge were noticeably faster than requests from a standard London VM over the public internet.
+*   **Tools**: [benchmark.sh](helpers/benchmark.sh)
+*   **Results**:
+    - [Singapore Benchmark Log](helpers/benchmark_ubuntu-singapore_20260514_141302.log)
+    - [London Benchmark Log](helpers/benchmark_ubuntu-benchmark-london_20260514_135825.log)
 
 ---
 
@@ -33,50 +69,64 @@ A premium, mobile-friendly web application to visualize IPL (Iuran Pemeliharaan 
    cd rekap-viewer
    ```
 
-2. **Configure your environment**:
-   - Copy the example config file:
-     ```bash
-     cp config.js.example config.js
-     ```
-   - Open `config.js` and enter your **Sheet ID** and **Google Cloud API Key**.
-   - *Note: `config.js` is ignored by Git to keep your keys secure.*
+2. **Install Dependencies**:
+   ```bash
+   npm install
+   ```
 
-3. **Run Locally**:
-   Simply open `index.html` in any modern web browser.
+3. **Configure Environment**:
+   - Create a `.env` file in the root directory:
+     ```env
+     GOOGLE_API_KEY=your_google_api_key
+     SHEET_ID=your_spreadsheet_id
+     SUPABASE_URL=your_supabase_url
+     SUPABASE_ANON_KEY=your_supabase_anon_key
+     PORTAL_URL=http://community.localtest.me:5137
+     PORT=3000
+     ```
+
+4. **Run Locally**:
+   ```bash
+   npm start
+   ```
+   Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## 🚀 Deployment (Netlify)
+## 🚀 Deployment (Fly.io)
 
-This project is designed to be deployed to **Netlify** with zero build tools while maintaining security.
+This project is optimized for deployment on **Fly.io** using Docker.
 
-### 1. Set Environment Variables
-In your Netlify Dashboard, go to **Site settings** > **Build & deploy** > **Environment variables** and add:
-- `SHEET_ID`: Your Google Spreadsheet ID.
-- `API_KEY`: Your Google Cloud API Key.
-- `RANGE`: The range to fetch (e.g., `Import!A1:ZZ550`).
-
-### 2. Configure Build Command
-Set the **Build Command** to the following one-liner. This dynamically generates your configuration file during deployment:
-
+### 1. Launch App
 ```bash
-echo "window.APP_CONFIG = { SHEET_ID: '$SHEET_ID', API_KEY: '$API_KEY', RANGE: '$RANGE' };" > config.js
+fly launch
 ```
 
-### 3. Set Publish Directory
-Set the **Publish directory** to: `.` (or leave it blank).
+### 2. Set Secrets
+Ensure your sensitive credentials are set as Fly secrets:
+```bash
+fly secrets set GOOGLE_API_KEY=AIza... SHEET_ID=1xWE...
+```
+
+### 3. Deploy
+```bash
+fly deploy
+```
 
 ---
 
 ## 📊 Google Sheets Requirements
 
+The application expects a specific sheet structure, though it filters data for privacy:
+
 1. **Permissions**: The sheet must be shared as **"Anyone with the link → Viewer"**.
-2. **Structure**: 
-   - Column A: RT (Ignored by the viewer)
-   - Column B: Blok (Sticky)
-   - Column C: Nama (Sticky/Collapsible)
-   - Column D: Nomor (Sticky)
-   - Subsequent columns: Monthly payment data
+2. **Sheet Tab Name**: The default tab name should be `Import` (configurable via `RANGE` env var).
+3. **Structure (Original Sheet)**: 
+   - **Column A**: RT (Ignored by app)
+   - **Column B**: Blok (Sticky)
+   - **Column C**: Nama (**STRICTLY STRIPPED** by server for privacy)
+   - **Column D**: Nomor (Sticky)
+   - **Subsequent columns**: Monthly payment data (e.g., Jan-24, Feb-24...)
 
 ## 📄 License
 MIT

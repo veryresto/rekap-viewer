@@ -1,0 +1,28 @@
+========================================
+Benchmark
+Time: Thu May 14 13:58:25 UTC 2026
+Host: ubuntu-benchmark-london
+URL : https://rekap.veryresto.com/api/rekap
+File: benchmark_ubuntu-benchmark-london_20260514_135825.log
+========================================
+
+=== Response Headers ===
+x-fly-region: sin
+x-cache-updated-at: 2026-05-14T13:41:34.218Z
+x-cache-age: 1014
+date: Thu, 14 May 2026 13:58:28 GMT
+fly-request-id: 01KRKCG3DVXTRN8HS9JAXTPJMA-lhr
+server: Fly/8829d9560 (2026-05-12)
+
+=== Timing Metrics ===
+
+DNS Lookup      : 0.001440s
+TCP Connect     : 0.003349s
+TLS Handshake   : 0.147594s
+TTFB            : 0.517210s
+Total           : 1.094576s
+Download Speed  : 122752 bytes/s
+Remote IP       : 66.241.125.101
+HTTP Version    : 2
+Response Code   : 200
+

@@ -1,0 +1,27 @@
+========================================
+Benchmark
+Time: Thu May 14 14:13:02 UTC 2026
+Host: ubuntu-singapore
+URL : https://rekap.veryresto.com/api/rekap
+File: benchmark_ubuntu-singapore_20260514_141302.log
+========================================
+
+=== Response Headers ===
+x-fly-region: sin
+x-cache-updated-at: 2026-05-14T14:09:45.669Z
+x-cache-age: 200
+date: Thu, 14 May 2026 14:13:06 GMT
+server: Fly/8829d9560 (2026-05-12)
+fly-request-id: 01KRKDAWD4NK24WQRR9RQPP3AZ-sin
+
+=== Timing Metrics ===
+
+DNS Lookup      : 0.001912s
+TCP Connect     : 0.003064s
+TLS Handshake   : 0.341342s
+TTFB            : 0.372056s
+Total           : 0.376480s
+Download Speed  : 356890 bytes/s
+Remote IP       : 66.241.125.101
+HTTP Version    : 2
+Response Code   : 200

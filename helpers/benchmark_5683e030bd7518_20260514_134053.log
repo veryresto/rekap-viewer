@@ -1,0 +1,28 @@
+========================================
+Benchmark
+Time: Thu May 14 13:40:53 UTC 2026
+Host: 5683e030bd7518
+URL : https://rekap.veryresto.com/api/rekap
+File: benchmark_5683e030bd7518_20260514_134053.log
+========================================
+
+=== Response Headers ===
+x-fly-region: sin
+x-cache-updated-at: 2026-05-14T13:36:34.230Z
+x-cache-age: 259
+date: Thu, 14 May 2026 13:40:53 GMT
+fly-request-id: 01KRKBG0BN3KE0KTSA6DBSC994-sin
+server: Fly/8829d9560 (2026-05-12)
+
+=== Timing Metrics ===
+
+DNS Lookup      : 0.000659s
+TCP Connect     : 0.000850s
+TLS Handshake   : 0.029853s
+TTFB            : 0.051872s
+Total           : 0.052983s
+Download Speed  : 2535945 bytes/s
+Remote IP       : 66.241.125.101
+HTTP Version    : 2
+Response Code   : 200
+
