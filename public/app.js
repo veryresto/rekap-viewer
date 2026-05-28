@@ -330,7 +330,7 @@ function render(rows) {
 
   // Inject ◀/▶ toggle button in the Nomor <th> to collapse identity columns
   const nomorTh = theadRow.querySelector(`[data-col="${identityColCount}"]`);
-  if (nomorTh) {
+  if (nomorTh && hasNamaCol) {
     nomorTh.classList.add("has-toggle");
     toggleBtn = document.createElement("button");
     toggleBtn.className = "col-toggle-btn";
@@ -446,7 +446,7 @@ function render(rows) {
   requestAnimationFrame(() => {
     updateColumnVisibility();
     applyStickyColumns();
-    if (window.innerWidth < 640) collapsePanel();
+    if (window.innerWidth < 640 && hasNamaCol) collapsePanel();
   });
 }
 
