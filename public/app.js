@@ -155,8 +155,9 @@ function applyFilter() {
   const isSemua = activeChips.length === 0;
   const selectedBloks = new Set(activeChips.map(c => c.dataset.blok));
 
-  const activeLunasChip = chipGroupLunasEl ? chipGroupLunasEl.querySelector(".chip.active:not(.chip-all)") : null;
-  const targetYearKey = activeLunasChip ? activeLunasChip.dataset.year : null;
+  const activeLunasChips = chipGroupLunasEl ? [...chipGroupLunasEl.querySelectorAll(".chip:not(.chip-all).active")] : [];
+  const isLunasSemua = activeLunasChips.length === 0;
+  const selectedLunasYears = new Set(activeLunasChips.map(c => c.dataset.year));
 
   // Hide/show rows
   let visibleCount = 0;
@@ -170,8 +171,17 @@ function applyFilter() {
     const nomorText = tr.querySelector(`[data-col="${nomorColIdx}"]`)?.textContent.trim().toLowerCase() ?? "";
     const namaText = hasNamaCol ? (tr.querySelector(`[data-col="2"]`)?.textContent.trim().toLowerCase() ?? "") : "";
 
-    const summaryCell = targetYearKey ? tr.querySelector(`[data-col="s${targetYearKey}"]`) : null;
-    const matchesLunas = !targetYearKey || (summaryCell && summaryCell.textContent.trim() === "12/12");
+    let matchesLunas = true;
+    if (!isLunasSemua) {
+      for (const year of selectedLunasYears) {
+        const summaryCell = tr.querySelector(`[data-col="s${year}"]`);
+        const isPaidOff = summaryCell && summaryCell.textContent.trim() === "12/12";
+        if (!isPaidOff) {
+          matchesLunas = false;
+          break;
+        }
+      }
+    }
 
     const matchesBlok   = isSemua || selectedBloks.has(blokVal);
     const matchesSearch = !searchTerm
@@ -325,12 +335,27 @@ function buildLunasChips(yearGroups) {
     const chip = e.target.closest(".chip");
     if (!chip) return;
 
-    chipGroupLunasEl.querySelectorAll(".chip").forEach(c => {
-      c.classList.remove("active");
-      c.setAttribute("aria-pressed", "false");
-    });
-    chip.classList.add("active");
-    chip.setAttribute("aria-pressed", "true");
+    if (chip.classList.contains("chip-all")) {
+      chipGroupLunasEl.querySelectorAll(".chip").forEach(c => {
+        c.classList.remove("active");
+        c.setAttribute("aria-pressed", "false");
+      });
+      chip.classList.add("active");
+      chip.setAttribute("aria-pressed", "true");
+    } else {
+      chipGroupLunasEl.querySelector(".chip-all").classList.remove("active");
+      chipGroupLunasEl.querySelector(".chip-all").setAttribute("aria-pressed", "false");
+      chip.classList.toggle("active");
+      chip.setAttribute("aria-pressed", chip.classList.contains("active") ? "true" : "false");
+
+      const anyActive = [...chipGroupLunasEl.querySelectorAll(".chip:not(.chip-all)")]
+        .some(c => c.classList.contains("active"));
+      if (!anyActive) {
+        const all = chipGroupLunasEl.querySelector(".chip-all");
+        all.classList.add("active");
+        all.setAttribute("aria-pressed", "true");
+      }
+    }
 
     applyFilter();
   });
