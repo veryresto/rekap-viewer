@@ -9,6 +9,7 @@ const CONFIG = {
 const statusEl = document.getElementById("status");
 const filterBarEl = document.getElementById("filter-bar");
 const chipGroupEl = document.getElementById("blok-chips");
+const chipGroupLunasEl = document.getElementById("lunas-chips");
 const containerEl = document.getElementById("table-container");
 const theadEl = document.getElementById("thead");
 const tbodyEl = document.getElementById("tbody");
@@ -154,6 +155,9 @@ function applyFilter() {
   const isSemua = activeChips.length === 0;
   const selectedBloks = new Set(activeChips.map(c => c.dataset.blok));
 
+  const activeLunasChip = chipGroupLunasEl ? chipGroupLunasEl.querySelector(".chip.active:not(.chip-all)") : null;
+  const targetYearKey = activeLunasChip ? activeLunasChip.dataset.year : null;
+
   // Hide/show rows
   let visibleCount = 0;
   const headers = document.querySelectorAll("#thead th");
@@ -166,11 +170,14 @@ function applyFilter() {
     const nomorText = tr.querySelector(`[data-col="${nomorColIdx}"]`)?.textContent.trim().toLowerCase() ?? "";
     const namaText = hasNamaCol ? (tr.querySelector(`[data-col="2"]`)?.textContent.trim().toLowerCase() ?? "") : "";
 
+    const summaryCell = targetYearKey ? tr.querySelector(`[data-col="s${targetYearKey}"]`) : null;
+    const matchesLunas = !targetYearKey || (summaryCell && summaryCell.textContent.trim() === "12/12");
+
     const matchesBlok   = isSemua || selectedBloks.has(blokVal);
     const matchesSearch = !searchTerm
       || nomorText.includes(searchTerm)
       || (hasNamaCol && namaText.includes(searchTerm));
-    const show = matchesBlok && matchesSearch;
+    const show = matchesBlok && matchesSearch && matchesLunas;
     tr.classList.toggle("row-hidden", !show);
     if (show) visibleCount++;
   });
@@ -288,6 +295,43 @@ function buildFilterChips(rows) {
         all.setAttribute("aria-pressed", "true");
       }
     }
+    applyFilter();
+  });
+}
+
+// ── LUNAS CHIPS ─────────────────────────────────────────────────────────
+function buildLunasChips(yearGroups) {
+  if (!chipGroupLunasEl) return;
+  chipGroupLunasEl.innerHTML = "";
+
+  const allChip = document.createElement("button");
+  allChip.className = "chip chip-all active";
+  allChip.textContent = "Semua";
+  allChip.dataset.year = "";
+  allChip.setAttribute("aria-pressed", "true");
+  chipGroupLunasEl.appendChild(allChip);
+
+  const years = Object.keys(yearGroups).sort();
+  years.forEach(year => {
+    const chip = document.createElement("button");
+    chip.className = "chip";
+    chip.textContent = `Lunas '${year}`;
+    chip.dataset.year = year;
+    chip.setAttribute("aria-pressed", "false");
+    chipGroupLunasEl.appendChild(chip);
+  });
+
+  chipGroupLunasEl.addEventListener("click", e => {
+    const chip = e.target.closest(".chip");
+    if (!chip) return;
+
+    chipGroupLunasEl.querySelectorAll(".chip").forEach(c => {
+      c.classList.remove("active");
+      c.setAttribute("aria-pressed", "false");
+    });
+    chip.classList.add("active");
+    chip.setAttribute("aria-pressed", "true");
+
     applyFilter();
   });
 }
@@ -442,6 +486,7 @@ function render(rows) {
   containerEl.classList.add("visible");
   rowCountEl.textContent = (rows.length - 1) + " warga";
   buildFilterChips(rows);
+  buildLunasChips(yearGroups);
 
   requestAnimationFrame(() => {
     updateColumnVisibility();
