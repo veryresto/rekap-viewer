@@ -118,10 +118,19 @@ function applyStickyColumns() {
 
 // ── COLUMN VISIBILITY ──────────────────────────────────────────────────────
 function updateColumnVisibility() {
+  const headers = document.querySelectorAll("#thead th");
+  const hasNamaCol = Array.from(headers).some(th => th.textContent.trim() === 'Nama');
+
   // Blok (data-col 1): hidden when collapsed OR when filter doesn't need it
   const showBlok = blokShouldShow && !isCollapsed;
   document.querySelectorAll(`[data-col="1"]`)
     .forEach(el => el.classList.toggle("col-hidden", !showBlok));
+
+  // Nama (data-col 2): hidden when collapsed (only if the "Nama" column exists)
+  if (hasNamaCol) {
+    document.querySelectorAll(`[data-col="2"]`)
+      .forEach(el => el.classList.toggle("col-hidden", isCollapsed));
+  }
 }
 
 // ── COLLAPSE / EXPAND ─────────────────────────────────────────────────────
@@ -145,13 +154,20 @@ function applyFilter() {
 
   // Hide/show rows
   let visibleCount = 0;
+  const headers = document.querySelectorAll("#thead th");
+  const hasNamaCol = Array.from(headers).some(th => th.textContent.trim() === 'Nama');
+  const nomorColIdx = hasNamaCol ? 3 : 2;
+
   document.querySelectorAll("#tbody tr").forEach(tr => {
     const blokCell  = tr.querySelector(`[data-col="1"]`);
     const blokVal   = blokCell ? blokCell.textContent.trim() : "";
-    const nomorText = tr.querySelector(`[data-col="2"]`)?.textContent.trim().toLowerCase() ?? "";
+    const nomorText = tr.querySelector(`[data-col="${nomorColIdx}"]`)?.textContent.trim().toLowerCase() ?? "";
+    const namaText = hasNamaCol ? (tr.querySelector(`[data-col="2"]`)?.textContent.trim().toLowerCase() ?? "") : "";
+
     const matchesBlok   = isSemua || selectedBloks.has(blokVal);
     const matchesSearch = !searchTerm
-      || nomorText.includes(searchTerm);
+      || nomorText.includes(searchTerm)
+      || (hasNamaCol && namaText.includes(searchTerm));
     const show = matchesBlok && matchesSearch;
     tr.classList.toggle("row-hidden", !show);
     if (show) visibleCount++;
@@ -282,9 +298,13 @@ function render(rows) {
   }
 
   const headers = rows[0];
+  const hasNamaCol = headers.some(cell => typeof cell === 'string' && cell.trim() === 'Nama');
+  const identityColCount = hasNamaCol ? 3 : 2;
+  CONFIG.STICKY_COLUMNS = hasNamaCol ? [1, 2, 3] : [1, 2];
+
   const yearGroups = {}; 
   headers.forEach((text, i) => {
-    if (i <= 2) return; 
+    if (i <= identityColCount) return; 
     const match = text.match(/[- /](\d{2,4})$/);
     if (match) {
       const year = match[1];
@@ -312,7 +332,7 @@ function render(rows) {
     { key: "s26", label: "'26", yearKey: "26", full: 2026 },
   ];
 
-  const nomorThInDom = theadEl.querySelector(`[data-col="2"]`);
+  const nomorThInDom = theadEl.querySelector(`[data-col="${identityColCount}"]`);
   if (nomorThInDom) {
     [...SUMMARY_YEARS].reverse().forEach(({ key, label }) => {
       const th = document.createElement("th");
@@ -361,7 +381,7 @@ function render(rows) {
         }
       }
     }
-    const nomorTd = cellsByCol[2];
+    const nomorTd = cellsByCol[identityColCount];
     if (nomorTd) {
       [...SUMMARY_YEARS].reverse().forEach(({ key, yearKey, full }) => {
         const colIndices = yearGroups[yearKey] || [];

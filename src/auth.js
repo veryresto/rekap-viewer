@@ -15,6 +15,7 @@ let supabase = null;
 // Multi-level in-process cache with TTL for auth performance and rate limit prevention
 const jwtCache = new Map();
 const approvalCache = new Map();
+const committeeCache = new Map();
 const CACHE_TTL_MS = 45 * 1000; // 45 seconds
 
 // Periodically clean up expired cache entries to prevent memory growth
@@ -28,6 +29,11 @@ const cleanupTimer = setInterval(() => {
     for (const [key, val] of approvalCache.entries()) {
         if (now >= val.expiresAt) {
             approvalCache.delete(key);
+        }
+    }
+    for (const [key, val] of committeeCache.entries()) {
+        if (now >= val.expiresAt) {
+            committeeCache.delete(key);
         }
     }
 }, 10 * 60 * 1000); // every 10 minutes
@@ -137,6 +143,58 @@ async function fetchApprovalStatus(userId) {
     }
 }
 
+// Scopes Supabase queries with the user's JWT to resolve RLS properly
+function getSupabaseUserClient(accessToken) {
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+        throw new Error('SUPABASE_URL and SUPABASE_ANON_KEY are required');
+    }
+    return createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: { persistSession: false },
+        global: {
+            headers: {
+                Authorization: `Bearer ${accessToken}`
+            }
+        },
+        realtime: { transport: require('ws') }
+    });
+}
+
+// Query profiles.is_platform_manager for a given user ID.
+// Returns true if the user is an admin or resident_verifier, false otherwise.
+async function fetchIsCommittee(accessToken, userId) {
+    if (!userId || !accessToken) return false;
+
+    if (accessToken === 'dev-bypass-token') {
+        return true;
+    }
+
+    const cached = committeeCache.get(userId);
+    if (cached && Date.now() < cached.expiresAt) {
+        return cached.isCommittee;
+    }
+
+    try {
+        const client = getSupabaseUserClient(accessToken);
+        const { data, error } = await client.rpc('is_platform_manager', { uid: userId });
+
+        if (error) {
+            console.error('Error checking platform manager status:', error.message);
+            return false;
+        }
+
+        const isCommittee = data === true;
+        committeeCache.set(userId, {
+            isCommittee,
+            expiresAt: Date.now() + CACHE_TTL_MS
+        });
+
+        return isCommittee;
+    } catch (e) {
+        console.error('Error checking platform manager status:', e.message);
+        return false;
+    }
+}
+
 // Build the full portal redirect URL preserving the current request URL,
 // INCLUDING query string (e.g. ?blok=A&search=123).
 function buildPortalRedirectUrl(currentUrl) {
@@ -179,6 +237,7 @@ module.exports = {
     extractSessionFromCookieHeader,
     verifyJwt,
     fetchApprovalStatus,
+    fetchIsCommittee,
     buildPortalRedirectUrl,
     globalLogout
 };

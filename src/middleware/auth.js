@@ -16,6 +16,7 @@ const DEV_BYPASS_AUTH = process.env.DEV_BYPASS_AUTH === 'true';
 async function requireAuth(req, res, next) {
     if (DEV_BYPASS_AUTH) {
         req.user = { id: 'dev-bypass-user', email: 'dev@localtest.me' };
+        req.accessToken = 'dev-bypass-token';
         return next();
     }
 
@@ -32,6 +33,7 @@ async function requireAuth(req, res, next) {
     }
     
     req.user = user;
+    req.accessToken = session.access_token;
     next();
 }
 

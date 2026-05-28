@@ -3,7 +3,7 @@ const express = require('express');
 const path = require('path');
 const { uploadCache, readCache } = require('./storage');
 const { requireAuth, requireApprovedResident } = require('./middleware/auth');
-const { extractSessionFromCookieHeader, globalLogout } = require('./auth');
+const { extractSessionFromCookieHeader, globalLogout, fetchIsCommittee } = require('./auth');
 
 const app = express();
 app.set('trust proxy', true); // Ensure req.protocol correctly reflects HTTPS behind Fly.io proxy
@@ -99,25 +99,6 @@ async function fetchGoogleSheetsData() {
         }
 
         const data = await response.json();
-        
-        // Scan header row (index 0) to dynamically locate "Nama" column
-        if (data.values && Array.isArray(data.values) && data.values.length > 0) {
-            const headerRow = data.values[0];
-            const namaIdx = headerRow.findIndex(cell => typeof cell === 'string' && cell.trim() === 'Nama');
-            
-            if (namaIdx !== -1) {
-                data.values = data.values.map(row => {
-                    if (row.length > namaIdx) {
-                        const newRow = [...row];
-                        newRow.splice(namaIdx, 1); // Remove "Nama" column from row
-                        return newRow;
-                    }
-                    return row;
-                });
-            } else {
-                console.warn('[WARN] "Nama" column not found in Google Sheets header. No dynamic splicing performed.');
-            }
-        }
         return data;
     } catch (error) {
         clearTimeout(timeoutId);
@@ -169,7 +150,35 @@ app.get('/api/rekap', requireAuth, requireApprovedResident, async (req, res) => 
         res.setHeader('X-Cache-Updated-At', cache.updatedAt);
         res.setHeader('X-Cache-Age', ageSeconds);
 
-        res.json(cache.data);
+        const sheetData = cache.data;
+        const isCommittee = await fetchIsCommittee(req.accessToken, req.user.id);
+
+        if (isCommittee) {
+            return res.json(sheetData);
+        }
+
+        // For regular residents, dynamically splice the "Nama" column from a shallow-cloned array
+        if (sheetData.values && Array.isArray(sheetData.values) && sheetData.values.length > 0) {
+            const headerRow = sheetData.values[0];
+            const namaIdx = headerRow.findIndex(cell => typeof cell === 'string' && cell.trim() === 'Nama');
+
+            if (namaIdx !== -1) {
+                const sanitizedValues = sheetData.values.map(row => {
+                    if (row.length > namaIdx) {
+                        const newRow = [...row];
+                        newRow.splice(namaIdx, 1); // Strip "Nama" column for regular resident privacy
+                        return newRow;
+                    }
+                    return row;
+                });
+                return res.json({
+                    ...sheetData,
+                    values: sanitizedValues
+                });
+            }
+        }
+
+        res.json(sheetData);
     } catch (error) {
         console.error('API Error:', error.message);
         res.status(500).json({ error: 'Internal Server Error' });
