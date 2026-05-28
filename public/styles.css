@@ -405,8 +405,20 @@ thead th.has-toggle {
   display: none;
 }
 
+/* ── Nama Column Width Constraint ────────────────────────── */
+.col-nama {
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* ── Mobile ───────────────────────────────────────────────── */
 @media (max-width: 600px) {
+  .col-nama {
+    max-width: 120px;
+  }
+
   .app-header {
     padding: 10px 14px;
   }

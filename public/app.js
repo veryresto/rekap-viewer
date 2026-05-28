@@ -136,12 +136,14 @@ function updateColumnVisibility() {
 // ── COLLAPSE / EXPAND ─────────────────────────────────────────────────────
 function collapsePanel() {
   isCollapsed = true;
+  if (toggleBtn) toggleBtn.textContent = "▶";
   updateColumnVisibility();
   requestAnimationFrame(() => applyStickyColumns());
 }
 
 function expandPanel() {
   isCollapsed = false;
+  if (toggleBtn) toggleBtn.textContent = "◀";
   updateColumnVisibility();
   requestAnimationFrame(() => applyStickyColumns());
 }
@@ -320,10 +322,31 @@ function render(rows) {
     const th = document.createElement("th");
     th.textContent = text;
     th.dataset.col = i;
+    if (text && text.trim() === "Nama") {
+      th.classList.add("col-nama");
+    }
     theadRow.appendChild(th);
   });
 
-  // Removed: ◀/▶ toggle button in the Nomor <th>
+  // Inject ◀/▶ toggle button in the Nomor <th> to collapse identity columns
+  const nomorTh = theadRow.querySelector(`[data-col="${identityColCount}"]`);
+  if (nomorTh) {
+    nomorTh.classList.add("has-toggle");
+    toggleBtn = document.createElement("button");
+    toggleBtn.className = "col-toggle-btn";
+    toggleBtn.setAttribute("aria-label", "Toggle info columns");
+    toggleBtn.textContent = isCollapsed ? "▶" : "◀";
+    toggleBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (isCollapsed) {
+        expandPanel();
+      } else {
+        collapsePanel();
+      }
+    });
+    nomorTh.appendChild(toggleBtn);
+  }
+
   theadEl.appendChild(theadRow);
 
   const SUMMARY_YEARS = [
@@ -359,6 +382,9 @@ function render(rows) {
       const td = document.createElement("td");
       td.textContent = cellDisplay(val);
       td.dataset.col = i;
+      if (headers[i] && headers[i].trim() === "Nama") {
+        td.classList.add("col-nama");
+      }
       tr.appendChild(td);
       cellsByCol[i] = td;
     });
