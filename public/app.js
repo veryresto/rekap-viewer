@@ -593,44 +593,96 @@ async function fetchUser() {
         document.getElementById("user-avatar-large").innerHTML = `<img src="${user.avatar_url}" alt="Avatar" />`;
       }
 
-      const roleEl = document.getElementById("user-role");
-      if (roleEl) {
-        if (user.profile) {
-          const type = user.profile.participant_type;
-          const subtype = user.profile.resident_subtype;
-          const affiliation = user.profile.requested_affiliation;
+      const tagsContainer = document.getElementById("user-tags");
+      const headerTagsContainer = document.getElementById("header-tags");
+      
+      if (tagsContainer) {
+        tagsContainer.innerHTML = "";
+      }
+      if (headerTagsContainer) {
+        headerTagsContainer.innerHTML = "";
+      }
+
+      // Generate resident/non-resident tag
+      if (user.profile && tagsContainer) {
+        const type = user.profile.participant_type;
+        const subtype = user.profile.resident_subtype;
+        const affiliation = user.profile.requested_affiliation;
+        
+        let profileLabel = "";
+        let profileClass = "";
+        
+        if (type === "resident") {
+          profileClass = "tag-resident";
+          if (subtype === "owner") {
+            profileLabel = "Warga (Pemilik)";
+          } else if (subtype === "renter") {
+            profileLabel = "Warga (Penyewa)";
+          } else {
+            profileLabel = "Warga";
+          }
+        } else if (type === "non_resident") {
+          profileClass = "tag-nonresident";
+          if (affiliation === "security") {
+            profileLabel = "Non-Warga (Keamanan)";
+          } else if (affiliation === "secretariat") {
+            profileLabel = "Non-Warga (Sekretariat)";
+          } else if (affiliation === "vendor") {
+            profileLabel = "Non-Warga (Mitra)";
+          } else if (affiliation === "contractor") {
+            profileLabel = "Non-Warga (Kontraktor)";
+          } else if (affiliation === "assistant") {
+            profileLabel = "Non-Warga (Asisten)";
+          } else if (affiliation === "other") {
+            profileLabel = "Non-Warga (Lainnya)";
+          } else {
+            profileLabel = "Non-Warga";
+          }
+        }
+        
+        if (profileLabel) {
+          const badge = document.createElement("span");
+          badge.className = `tag-badge ${profileClass}`;
+          badge.textContent = profileLabel;
+          tagsContainer.appendChild(badge);
+        }
+      }
+
+      // Generate global roles tags
+      if (user.roles && Array.isArray(user.roles)) {
+        user.roles.forEach(role => {
+          let roleLabel = "";
+          let roleClass = "";
           
-          let label = "";
-          if (type === "resident") {
-            if (subtype === "owner") {
-              label = "Warga (Pemilik)";
-            } else if (subtype === "renter") {
-              label = "Warga (Penyewa)";
-            } else {
-              label = "Warga";
+          if (role === "admin") {
+            roleLabel = "Global Admin";
+            roleClass = "tag-admin";
+          } else if (role === "resident_verifier") {
+            roleLabel = "Verifier";
+            roleClass = "tag-verifier";
+          } else if (role === "platform_moderator") {
+            roleLabel = "Moderator";
+            roleClass = "tag-moderator";
+          }
+          
+          if (roleLabel) {
+            // Dropdown tag
+            if (tagsContainer) {
+              const badge = document.createElement("span");
+              badge.className = `tag-badge ${roleClass}`;
+              badge.textContent = roleLabel;
+              tagsContainer.appendChild(badge);
             }
-          } else if (type === "non_resident") {
-            if (affiliation === "security") {
-              label = "Non-Warga (Keamanan)";
-            } else if (affiliation === "secretariat") {
-              label = "Non-Warga (Sekretariat)";
-            } else if (affiliation === "vendor") {
-              label = "Non-Warga (Mitra)";
-            } else if (affiliation === "contractor") {
-              label = "Non-Warga (Kontraktor)";
-            } else if (affiliation === "assistant") {
-              label = "Non-Warga (Asisten)";
-            } else if (affiliation === "other") {
-              label = "Non-Warga (Lainnya)";
-            } else {
-              label = "Non-Warga";
+            
+            // Header tag
+            if (headerTagsContainer) {
+              const badge = document.createElement("span");
+              badge.className = `tag-badge ${roleClass}`;
+              badge.textContent = roleLabel;
+              headerTagsContainer.appendChild(badge);
             }
           }
-          roleEl.textContent = label;
-          roleEl.style.display = label ? "" : "none";
-        } else {
-          roleEl.style.display = "none";
-        }
+        });
       }
     }
   } catch (err) {

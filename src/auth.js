@@ -18,6 +18,7 @@ const approvalCache = new Map();
 const committeeCache = new Map();
 const permissionCache = new Map();
 const profileCache = new Map();
+const rolesCache = new Map();
 const CACHE_TTL_MS = 45 * 1000; // 45 seconds
 
 // Periodically clean up expired cache entries to prevent memory growth
@@ -46,6 +47,11 @@ const cleanupTimer = setInterval(() => {
     for (const [key, val] of profileCache.entries()) {
         if (now >= val.expiresAt) {
             profileCache.delete(key);
+        }
+    }
+    for (const [key, val] of rolesCache.entries()) {
+        if (now >= val.expiresAt) {
+            rolesCache.delete(key);
         }
     }
 }, 10 * 60 * 1000); // every 10 minutes
@@ -326,6 +332,42 @@ async function fetchUserProfile(accessToken, userId) {
         return null;
     }
 }
+async function fetchUserRoles(accessToken, userId) {
+    if (!userId || !accessToken) return [];
+
+    if (accessToken === 'dev-bypass-token') {
+        return ['admin'];
+    }
+
+    const cached = rolesCache.get(userId);
+    if (cached && Date.now() < cached.expiresAt) {
+        return cached.roles;
+    }
+
+    try {
+        const client = getSupabaseUserClient(accessToken);
+        const { data, error } = await client
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', userId);
+
+        if (error) {
+            console.error('Error fetching user roles:', error.message);
+            return [];
+        }
+
+        const roles = data?.map(r => r.role) || [];
+        rolesCache.set(userId, {
+            roles,
+            expiresAt: Date.now() + CACHE_TTL_MS
+        });
+
+        return roles;
+    } catch (e) {
+        console.error('Error fetching user roles:', e.message);
+        return [];
+    }
+}
 
 module.exports = {
     extractSessionFromCookieHeader,
@@ -335,5 +377,6 @@ module.exports = {
     buildPortalRedirectUrl,
     globalLogout,
     checkNamespacedPermission,
-    fetchUserProfile
+    fetchUserProfile,
+    fetchUserRoles
 };

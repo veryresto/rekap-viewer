@@ -3,7 +3,7 @@ const express = require('express');
 const path = require('path');
 const { uploadCache, readCache } = require('./storage');
 const { requireAuth, requireApprovedResident } = require('./middleware/auth');
-const { extractSessionFromCookieHeader, globalLogout, fetchIsCommittee, fetchUserProfile } = require('./auth');
+const { extractSessionFromCookieHeader, globalLogout, fetchIsCommittee, fetchUserProfile, fetchUserRoles } = require('./auth');
 
 const app = express();
 app.set('trust proxy', true); // Ensure req.protocol correctly reflects HTTPS behind Fly.io proxy
@@ -49,6 +49,7 @@ app.get('/', requireAuth, requireApprovedResident, (req, res) => {
 app.get('/api/me', requireAuth, requireApprovedResident, async (req, res) => {
     const user = req.user;
     const profile = await fetchUserProfile(req.accessToken, user.id);
+    const roles = await fetchUserRoles(req.accessToken, user.id);
     res.json({
         id: user.id,
         email: user.email,
@@ -58,7 +59,8 @@ app.get('/api/me', requireAuth, requireApprovedResident, async (req, res) => {
             participant_type: profile.participant_type,
             resident_subtype: profile.resident_subtype,
             requested_affiliation: profile.requested_affiliation
-        } : null
+        } : null,
+        roles: roles
     });
 });
 
