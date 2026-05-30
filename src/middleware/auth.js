@@ -2,7 +2,9 @@ const {
     extractSessionFromCookieHeader, 
     verifyJwt, 
     fetchApprovalStatus, 
-    buildPortalRedirectUrl 
+    buildPortalRedirectUrl,
+    fetchUserProfile,
+    checkNamespacedPermission
 } = require('../auth');
 
 const DEV_BYPASS_AUTH = process.env.DEV_BYPASS_AUTH === 'true';
@@ -72,7 +74,9 @@ async function requireApprovedResident(req, res, next) {
         return handleAuthFailure(req, res);
     }
     
-    const status = await fetchApprovalStatus(req.user.id);
+    // 1. Fetch the user profile (status and classification)
+    const profile = await fetchUserProfile(req.accessToken, req.user.id);
+    const status = profile?.approval_status || null;
     
     console.log('[AUTH]', {
         userId: req.user.id,
@@ -81,18 +85,28 @@ async function requireApprovedResident(req, res, next) {
         route: req.originalUrl
     });
     
-    if (status === 'approved') {
-        return next();
+    if (status !== 'approved') {
+        const isApiRequest = req.path.startsWith('/api/');
+        if (isApiRequest) {
+            return res.status(403).json({ error: 'Access denied', reason: status || 'unknown' });
+        }
+        res.set('Cache-Control', 'no-store');
+        return res.redirect(`/auth-denied?reason=${status || 'unknown'}`);
     }
     
-    const isApiRequest = req.path.startsWith('/api/');
-    if (isApiRequest) {
-        return res.status(403).json({ error: 'Access denied', reason: status || 'unknown' });
+    // 2. CheckNamespacedPermission for 'rekap_viewer.read_data'
+    const hasPermission = await checkNamespacedPermission(req.accessToken, req.user.id, 'rekap_viewer.read_data');
+    if (!hasPermission) {
+        console.log('[AUTH] User lacks rekap_viewer.read_data permission:', req.user.id);
+        const isApiRequest = req.path.startsWith('/api/');
+        if (isApiRequest) {
+            return res.status(403).json({ error: 'Access denied', reason: 'unauthorized_role' });
+        }
+        res.set('Cache-Control', 'no-store');
+        return res.redirect('/auth-denied?reason=unauthorized_role');
     }
     
-    // Governance denial -> redirect to auth-denied page
-    res.set('Cache-Control', 'no-store');
-    res.redirect(`/auth-denied?reason=${status || 'unknown'}`);
+    next();
 }
 
 module.exports = {

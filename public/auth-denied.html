@@ -75,6 +75,9 @@
     } else if (reason === 'suspended') {
         titleEl.textContent = 'Akun Ditangguhkan';
         msgEl.textContent = 'Akun Anda telah ditangguhkan. Silakan hubungi admin komunitas.';
+    } else if (reason === 'unauthorized_role') {
+        titleEl.textContent = 'Izin Tidak Memadai';
+        msgEl.textContent = 'Akun Anda telah disetujui, tetapi Anda belum memiliki peran (role) yang diperlukan untuk mengakses Rekap IPL. Silakan hubungi admin komunitas.';
     } else {
         titleEl.textContent = 'Akses Ditolak';
         msgEl.textContent = 'Anda tidak memiliki izin untuk melihat halaman ini.';

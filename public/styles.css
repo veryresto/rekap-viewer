@@ -702,3 +702,18 @@ tbody tr:hover td.status-full-even { background-color: #4ade80 !important; }
   margin-right: 8px;
 }
 
+.user-role {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--accent);
+  background-color: rgba(59, 130, 246, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-top: 4px;
+  align-self: flex-start;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+

@@ -592,6 +592,46 @@ async function fetchUser() {
         document.getElementById("user-avatar-btn").innerHTML = `<img src="${user.avatar_url}" alt="Avatar" />`;
         document.getElementById("user-avatar-large").innerHTML = `<img src="${user.avatar_url}" alt="Avatar" />`;
       }
+
+      const roleEl = document.getElementById("user-role");
+      if (roleEl) {
+        if (user.profile) {
+          const type = user.profile.participant_type;
+          const subtype = user.profile.resident_subtype;
+          const affiliation = user.profile.requested_affiliation;
+          
+          let label = "";
+          if (type === "resident") {
+            if (subtype === "owner") {
+              label = "Warga (Pemilik)";
+            } else if (subtype === "renter") {
+              label = "Warga (Penyewa)";
+            } else {
+              label = "Warga";
+            }
+          } else if (type === "non_resident") {
+            if (affiliation === "security") {
+              label = "Non-Warga (Keamanan)";
+            } else if (affiliation === "secretariat") {
+              label = "Non-Warga (Sekretariat)";
+            } else if (affiliation === "vendor") {
+              label = "Non-Warga (Mitra)";
+            } else if (affiliation === "contractor") {
+              label = "Non-Warga (Kontraktor)";
+            } else if (affiliation === "assistant") {
+              label = "Non-Warga (Asisten)";
+            } else if (affiliation === "other") {
+              label = "Non-Warga (Lainnya)";
+            } else {
+              label = "Non-Warga";
+            }
+          }
+          roleEl.textContent = label;
+          roleEl.style.display = label ? "" : "none";
+        } else {
+          roleEl.style.display = "none";
+        }
+      }
     }
   } catch (err) {
     console.error("[rekap] User profile error:", err);

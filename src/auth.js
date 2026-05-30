@@ -16,6 +16,8 @@ let supabase = null;
 const jwtCache = new Map();
 const approvalCache = new Map();
 const committeeCache = new Map();
+const permissionCache = new Map();
+const profileCache = new Map();
 const CACHE_TTL_MS = 45 * 1000; // 45 seconds
 
 // Periodically clean up expired cache entries to prevent memory growth
@@ -34,6 +36,16 @@ const cleanupTimer = setInterval(() => {
     for (const [key, val] of committeeCache.entries()) {
         if (now >= val.expiresAt) {
             committeeCache.delete(key);
+        }
+    }
+    for (const [key, val] of permissionCache.entries()) {
+        if (now >= val.expiresAt) {
+            permissionCache.delete(key);
+        }
+    }
+    for (const [key, val] of profileCache.entries()) {
+        if (now >= val.expiresAt) {
+            profileCache.delete(key);
         }
     }
 }, 10 * 60 * 1000); // every 10 minutes
@@ -233,11 +245,95 @@ async function globalLogout(accessToken) {
     }
 }
 
+async function checkNamespacedPermission(accessToken, userId, permission) {
+    if (!userId || !accessToken) return false;
+
+    if (accessToken === 'dev-bypass-token') {
+        return true;
+    }
+
+    const cacheKey = `${userId}:${permission}`;
+    const cached = permissionCache.get(cacheKey);
+    if (cached && Date.now() < cached.expiresAt) {
+        return cached.hasPermission;
+    }
+
+    try {
+        const client = getSupabaseUserClient(accessToken);
+        const { data, error } = await client.rpc('has_namespaced_permission', {
+            user_id: userId,
+            namespaced_perm: permission
+        });
+
+        if (error) {
+            console.error(`Error checking namespaced permission ${permission}:`, error.message);
+            return false;
+        }
+
+        const hasPermission = data === true;
+        permissionCache.set(cacheKey, {
+            hasPermission,
+            expiresAt: Date.now() + CACHE_TTL_MS
+        });
+
+        return hasPermission;
+    } catch (e) {
+        console.error(`Error checking namespaced permission ${permission}:`, e.message);
+        return false;
+    }
+}
+
+async function fetchUserProfile(accessToken, userId) {
+    if (!userId || !accessToken) return null;
+
+    if (accessToken === 'dev-bypass-token') {
+        return {
+            approval_status: 'approved',
+            participant_type: 'resident',
+            resident_subtype: 'owner',
+            requested_affiliation: null
+        };
+    }
+
+    const cached = profileCache.get(userId);
+    if (cached && Date.now() < cached.expiresAt) {
+        return cached.profile;
+    }
+
+    try {
+        const client = getSupabaseUserClient(accessToken);
+        const { data, error } = await client
+            .from('profiles')
+            .select('approval_status, participant_type, resident_subtype, requested_affiliation')
+            .eq('id', userId)
+            .single();
+
+        if (error) {
+            console.error('Error fetching user profile:', error.message);
+            return null;
+        }
+
+        if (data) {
+            profileCache.set(userId, {
+                profile: data,
+                expiresAt: Date.now() + CACHE_TTL_MS
+            });
+        }
+
+        return data;
+    } catch (e) {
+        console.error('Error fetching user profile:', e.message);
+        return null;
+    }
+}
+
 module.exports = {
     extractSessionFromCookieHeader,
     verifyJwt,
     fetchApprovalStatus,
     fetchIsCommittee,
     buildPortalRedirectUrl,
-    globalLogout
+    globalLogout,
+    checkNamespacedPermission,
+    fetchUserProfile
 };
