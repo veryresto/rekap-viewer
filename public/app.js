@@ -629,12 +629,8 @@ async function fetchUser() {
             profileLabel = "Non-Warga (Sekretariat)";
           } else if (affiliation === "vendor") {
             profileLabel = "Non-Warga (Mitra)";
-          } else if (affiliation === "contractor") {
-            profileLabel = "Non-Warga (Kontraktor)";
           } else if (affiliation === "assistant") {
             profileLabel = "Non-Warga (Asisten)";
-          } else if (affiliation === "other") {
-            profileLabel = "Non-Warga (Lainnya)";
           } else {
             profileLabel = "Non-Warga";
           }
