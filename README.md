@@ -9,14 +9,16 @@ A secure, high-performance web application to visualize IPL (Iuran Pemeliharaan 
 
 ## ✨ Features
 
-- **Privacy-First**: Resident names ('Nama' column) are automatically stripped on the server side to ensure privacy.
-- **Secure Proxy**: Uses a Node.js/Express backend to fetch Google Sheets data, keeping your API keys and Spreadsheet IDs hidden from the public.
-- **Ecosystem Authentication**: Integrates seamlessly with the Veryresto community platform, sharing session state via JWT cookies and providing a unified global sign-out experience. Includes a modern, responsive user profile dropdown.
+- **Role-Based Privacy**: Resident names (`Nama` column) are automatically stripped on the server-side for regular residents to ensure privacy, but remain visible to authorized committee members.
+- **Role-Based Access Control (RBAC)**: Enforces namespaced permission check (`rekap_viewer.read_data`) on the server to authorize views based on user roles.
+- **Secure Proxy**: Uses a Node.js/Express backend to fetch Google Sheets data, keeping API keys and Spreadsheet IDs hidden from the client.
+- **Ecosystem Authentication**: Integrates seamlessly with the Veryresto community platform, sharing session state via JWT cookies and providing a unified global sign-out experience.
+- **Dynamic Profile Dropdown**: Displays the active user's details and roles dynamically via a tag-based system in the navigation dropdown.
 - **Sticky UI Layout**: 
   - Sticky table headers (top-frozen).
   - Sticky identity columns (Blok, Nomor) and Year Summary columns (frozen on horizontal scroll).
-- **Mobile Optimized**: Auto-collapses columns on small screens and features a collapsible filter bar.
-- **Visual Analytics**: Instant calculation of yearly payment status (e.g., "12/12") with color-coded highlighting.
+- **Interactive Multi-Select Filters**: Filter payment status (e.g., "Lunas") per year with multi-select support, alongside mobile-optimized collapsible filter bars.
+- **Visual Analytics**: Instant calculation of yearly payment status with color-coded highlighting.
 
 ---
 
