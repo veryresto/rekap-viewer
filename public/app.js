@@ -1,5 +1,21 @@
 "use strict";
 
+const analytics = {
+  async track(eventName, properties = {}) {
+    try {
+      await fetch('/api/analytics', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ eventName, properties })
+      });
+    } catch (e) {
+      // Fail silently
+    }
+  }
+};
+
 // ── CONFIG ────────────────────────────────────────────────────────────────
 const CONFIG = {
   STICKY_COLUMNS: [1, 2]
@@ -220,6 +236,7 @@ function initSearch() {
   if (!input) return;
 
   let debounceTimer;
+  let analyticsTimer;
   input.addEventListener("input", () => {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
@@ -227,6 +244,16 @@ function initSearch() {
       clearBtn.hidden = !searchTerm;
       applyFilter();
     }, 200);
+
+    clearTimeout(analyticsTimer);
+    analyticsTimer = setTimeout(() => {
+      const query = input.value.trim().toLowerCase();
+      if (query && query.length >= 2) {
+        analytics.track('search_performed', {
+          query_length: query.length
+        });
+      }
+    }, 500);
   });
 
   clearBtn.addEventListener("click", () => {
@@ -296,6 +323,13 @@ function buildFilterChips(rows) {
       chipGroupEl.querySelector(".chip-all").setAttribute("aria-pressed", "false");
       chip.classList.toggle("active");
       chip.setAttribute("aria-pressed", chip.classList.contains("active") ? "true" : "false");
+
+      if (chip.classList.contains("active")) {
+        analytics.track('filter_selected', {
+          filter_type: 'block',
+          value: chip.dataset.blok
+        });
+      }
 
       const anyActive = [...chipGroupEl.querySelectorAll(".chip:not(.chip-all)")]
         .some(c => c.classList.contains("active"));
@@ -567,6 +601,7 @@ async function loadData() {
       return;
     }
     render(data.values);
+    analytics.track('page_viewed', { page: 'rekap_viewer' });
   } catch (err) {
     hideLoading();
     showError(err.message);

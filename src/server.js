@@ -4,6 +4,7 @@ const path = require('path');
 const { uploadCache, readCache } = require('./storage');
 const { requireAuth, requireApprovedResident } = require('./middleware/auth');
 const { extractSessionFromCookieHeader, globalLogout, fetchIsCommittee, fetchUserProfile, fetchUserRoles } = require('./auth');
+const analytics = require('./lib/analytics');
 
 const app = express();
 app.set('trust proxy', true); // Ensure req.protocol correctly reflects HTTPS behind Fly.io proxy
@@ -62,6 +63,16 @@ app.get('/api/me', requireAuth, requireApprovedResident, async (req, res) => {
         } : null,
         roles: roles
     });
+});
+
+app.post('/api/analytics', express.json(), requireAuth, requireApprovedResident, async (req, res) => {
+    const { eventName, properties } = req.body || {};
+    if (eventName) {
+        analytics.track(req.accessToken, req.user.id, eventName, properties).catch(err => {
+            console.error('[server] Analytics track error:', err.message || err);
+        });
+    }
+    res.status(204).end();
 });
 
 app.post('/api/logout', async (req, res) => {
