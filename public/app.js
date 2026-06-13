@@ -282,10 +282,15 @@ function initFilterToggle() {
   const content = document.getElementById("filter-collapse-content");
   if (!btn || !content) return;
 
-  btn.addEventListener("click", () => {
-    const isExpanded = content.classList.toggle("expanded");
+  const syncToggleState = (isExpanded) => {
+    content.classList.toggle("expanded", isExpanded);
     btn.querySelector(".toggle-arrow").textContent = isExpanded ? "▴" : "▾";
-    btn.setAttribute("aria-expanded", isExpanded);
+    btn.setAttribute("aria-expanded", isExpanded ? "true" : "false");
+  };
+
+  syncToggleState(false);
+  btn.addEventListener("click", () => {
+    syncToggleState(!content.classList.contains("expanded"));
   });
 }
 
