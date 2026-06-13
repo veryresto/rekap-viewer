@@ -172,8 +172,9 @@ function applyFilter() {
   const selectedBloks = new Set(activeChips.map(c => c.dataset.blok));
 
   const activeLunasChips = chipGroupLunasEl ? [...chipGroupLunasEl.querySelectorAll(".chip:not(.chip-all).active")] : [];
-  const isLunasSemua = activeLunasChips.length === 0;
-  const selectedLunasYears = new Set(activeLunasChips.map(c => c.dataset.year));
+  const isStatusSemua = activeLunasChips.length === 0;
+  const selectedLunasYears = new Set(activeLunasChips.filter(c => c.dataset.mode === "lunas").map(c => c.dataset.year));
+  const selectedBelumLunasYears = new Set(activeLunasChips.filter(c => c.dataset.mode === "belum-lunas").map(c => c.dataset.year));
 
   // Hide/show rows
   let visibleCount = 0;
@@ -187,23 +188,30 @@ function applyFilter() {
     const nomorText = tr.querySelector(`[data-col="${nomorColIdx}"]`)?.textContent.trim().toLowerCase() ?? "";
     const namaText = hasNamaCol ? (tr.querySelector(`[data-col="2"]`)?.textContent.trim().toLowerCase() ?? "") : "";
 
-    let matchesLunas = true;
-    if (!isLunasSemua) {
-      for (const year of selectedLunasYears) {
+    let matchesPayment = true;
+    if (!isStatusSemua) {
+      const rowMatchesYearMode = (year, mode) => {
         const summaryCell = tr.querySelector(`[data-col="s${year}"]`);
-        const isPaidOff = summaryCell && summaryCell.textContent.trim() === "12/12";
-        if (!isPaidOff) {
-          matchesLunas = false;
-          break;
-        }
-      }
+        if (!summaryCell) return false;
+        const summaryText = summaryCell.textContent.trim();
+        const paidCount = parseInt(summaryText.split("/")[0], 10);
+        if (Number.isNaN(paidCount)) return false;
+        return mode === "lunas" ? paidCount === 12 : paidCount < 12;
+      };
+
+      const matchesSelectedLunasYears = selectedLunasYears.size === 0
+        || [...selectedLunasYears].every(year => rowMatchesYearMode(year, "lunas"));
+      const matchesSelectedBelumLunasYears = selectedBelumLunasYears.size === 0
+        || [...selectedBelumLunasYears].some(year => rowMatchesYearMode(year, "belum-lunas"));
+
+      matchesPayment = matchesSelectedLunasYears && matchesSelectedBelumLunasYears;
     }
 
     const matchesBlok   = isSemua || selectedBloks.has(blokVal);
     const matchesSearch = !searchTerm
       || nomorText.includes(searchTerm)
       || (hasNamaCol && namaText.includes(searchTerm));
-    const show = matchesBlok && matchesSearch && matchesLunas;
+    const show = matchesBlok && matchesSearch && matchesPayment;
     tr.classList.toggle("row-hidden", !show);
     if (show) visibleCount++;
   });
@@ -351,18 +359,27 @@ function buildLunasChips(yearGroups) {
   const allChip = document.createElement("button");
   allChip.className = "chip chip-all active";
   allChip.textContent = "Semua";
-  allChip.dataset.year = "";
+  allChip.dataset.mode = "all";
   allChip.setAttribute("aria-pressed", "true");
   chipGroupLunasEl.appendChild(allChip);
 
   const years = Object.keys(yearGroups).sort();
   years.forEach(year => {
-    const chip = document.createElement("button");
-    chip.className = "chip";
-    chip.textContent = `Lunas '${year}`;
-    chip.dataset.year = year;
-    chip.setAttribute("aria-pressed", "false");
-    chipGroupLunasEl.appendChild(chip);
+    const lunasChip = document.createElement("button");
+    lunasChip.className = "chip";
+    lunasChip.textContent = `Lunas '${year}`;
+    lunasChip.dataset.year = year;
+    lunasChip.dataset.mode = "lunas";
+    lunasChip.setAttribute("aria-pressed", "false");
+    chipGroupLunasEl.appendChild(lunasChip);
+
+    const belumLunasChip = document.createElement("button");
+    belumLunasChip.className = "chip";
+    belumLunasChip.textContent = `Belum Lunas '${year}`;
+    belumLunasChip.dataset.year = year;
+    belumLunasChip.dataset.mode = "belum-lunas";
+    belumLunasChip.setAttribute("aria-pressed", "false");
+    chipGroupLunasEl.appendChild(belumLunasChip);
   });
 
   chipGroupLunasEl.addEventListener("click", e => {
@@ -767,4 +784,3 @@ function initUserDropdown() {
 fetchUser();
 initUserDropdown();
 loadData();
-
