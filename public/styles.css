@@ -255,12 +255,100 @@ body {
     flex: 1;
     max-width: none;
   }
+
+  .chip-group#payment-chips {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .payment-status-row {
+    width: 100%;
+    padding: 6px 7px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .payment-status-label {
+    min-width: 100%;
+  }
+
+  .payment-header-actions {
+    width: 100%;
+  }
 }
 
 .chip-group {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+.chip-group#payment-chips {
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-height: min(40vh, 380px);
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.payment-status-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #fff, #f8fafc);
+}
+
+.payment-status-label {
+  min-width: 96px;
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.payment-header-row {
+  align-items: flex-start;
+  padding: 6px 8px;
+  gap: 4px;
+}
+
+.payment-header-label {
+  min-width: 96px;
+}
+
+.payment-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.payment-year-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+@media (min-width: 901px) {
+  .chip-group#payment-chips {
+    max-height: min(34vh, 330px);
+  }
+
+  .payment-status-row {
+    align-items: center;
+  }
+
+  .payment-status-label {
+    width: 104px;
+  }
 }
 
 .chip {
@@ -291,9 +379,18 @@ body {
   font-weight: 600;
 }
 
+.chip-group#status-mode .chip.active {
+  background: var(--th-bg);
+  border-color: var(--th-bg);
+}
+
 .chip.chip-all.active {
   background: var(--th-bg);
   border-color: var(--th-bg);
+}
+
+.chip-group#year-chips .chip {
+  min-width: 0;
 }
 
 /* ── Table Container ─────────────────────────────────────── */
@@ -761,4 +858,3 @@ tbody tr:hover td.status-full-even { background-color: #4ade80 !important; }
     display: none !important;
   }
 }
-

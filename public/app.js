@@ -25,7 +25,7 @@ const CONFIG = {
 const statusEl = document.getElementById("status");
 const filterBarEl = document.getElementById("filter-bar");
 const chipGroupEl = document.getElementById("blok-chips");
-const chipGroupLunasEl = document.getElementById("lunas-chips");
+const paymentChipGroupEl = document.getElementById("payment-chips");
 const containerEl = document.getElementById("table-container");
 const theadEl = document.getElementById("thead");
 const tbodyEl = document.getElementById("tbody");
@@ -37,6 +37,8 @@ let isCollapsed = false;   // whether Nama/Blok are hidden by user toggle
 let toggleBtn = null;    // the ◀/▶ button element
 let blokShouldShow = false;   // whether filter state says Blok col should show
 let searchTerm = "";     // current normalised search string (lowercase, trimmed)
+let availableYearKeys = []; // dynamic list of year keys discovered from headers
+let summaryKeys = []; // dynamic list of summary column keys ('s24', 's25', ...)
 
 // ── HELPERS ──────────────────────────────────────────────────────────────
 
@@ -109,10 +111,9 @@ function applyStickyColumns() {
     leftPx += width;
   });
 
-  // Pin summary columns (s24, s25, s26) continuing the same leftPx offset
-  const SUMMARY_KEYS = ["s24", "s25", "s26"];
-  SUMMARY_KEYS.forEach((key, i) => {
-    const isLast = i === SUMMARY_KEYS.length - 1;
+  // Pin summary columns continuing the same leftPx offset
+  summaryKeys.forEach((key, i) => {
+    const isLast = i === summaryKeys.length - 1;
     const th = document.querySelector(`#thead [data-col="${key}"]`);
     if (!th) return;
     const width = th.getBoundingClientRect().width;
@@ -171,10 +172,8 @@ function applyFilter() {
   const isSemua = activeChips.length === 0;
   const selectedBloks = new Set(activeChips.map(c => c.dataset.blok));
 
-  const activeLunasChips = chipGroupLunasEl ? [...chipGroupLunasEl.querySelectorAll(".chip:not(.chip-all).active")] : [];
-  const isStatusSemua = activeLunasChips.length === 0;
-  const selectedLunasYears = new Set(activeLunasChips.filter(c => c.dataset.mode === "lunas").map(c => c.dataset.year));
-  const selectedBelumLunasYears = new Set(activeLunasChips.filter(c => c.dataset.mode === "belum-lunas").map(c => c.dataset.year));
+  const activePaymentChips = paymentChipGroupEl ? [...paymentChipGroupEl.querySelectorAll(".chip:not(.chip-all).active")] : [];
+  const isPaymentSemua = activePaymentChips.length === 0;
 
   // Hide/show rows
   let visibleCount = 0;
@@ -189,22 +188,26 @@ function applyFilter() {
     const namaText = hasNamaCol ? (tr.querySelector(`[data-col="2"]`)?.textContent.trim().toLowerCase() ?? "") : "";
 
     let matchesPayment = true;
-    if (!isStatusSemua) {
-      const rowMatchesYearMode = (year, mode) => {
+    if (!isPaymentSemua) {
+      const grouped = new Map();
+      activePaymentChips.forEach(chip => {
+        const year = chip.dataset.year;
+        if (!grouped.has(year)) grouped.set(year, []);
+        grouped.get(year).push(chip.dataset.mode);
+      });
+
+      matchesPayment = [...grouped.entries()].every(([year, modes]) => {
         const summaryCell = tr.querySelector(`[data-col="s${year}"]`);
         if (!summaryCell) return false;
-        const summaryText = summaryCell.textContent.trim();
-        const paidCount = parseInt(summaryText.split("/")[0], 10);
+        const paidCount = parseInt(summaryCell.textContent.trim().split("/")[0], 10);
         if (Number.isNaN(paidCount)) return false;
-        return mode === "lunas" ? paidCount === 12 : paidCount < 12;
-      };
 
-      const matchesSelectedLunasYears = selectedLunasYears.size === 0
-        || [...selectedLunasYears].every(year => rowMatchesYearMode(year, "lunas"));
-      const matchesSelectedBelumLunasYears = selectedBelumLunasYears.size === 0
-        || [...selectedBelumLunasYears].some(year => rowMatchesYearMode(year, "belum-lunas"));
-
-      matchesPayment = matchesSelectedLunasYears && matchesSelectedBelumLunasYears;
+        return modes.every(mode => {
+          if (mode === "lunas") return paidCount === 12;
+          if (mode === "belum-lunas") return paidCount < 12;
+          return true;
+        });
+      });
     }
 
     const matchesBlok   = isSemua || selectedBloks.has(blokVal);
@@ -351,63 +354,88 @@ function buildFilterChips(rows) {
   });
 }
 
-// ── LUNAS CHIPS ─────────────────────────────────────────────────────────
+// ── PAYMENT CHIPS ────────────────────────────────────────────────────────
 function buildLunasChips(yearGroups) {
-  if (!chipGroupLunasEl) return;
-  chipGroupLunasEl.innerHTML = "";
+  if (!paymentChipGroupEl) return;
+  paymentChipGroupEl.innerHTML = "";
+
+  const years = Object.keys(yearGroups).sort();
+  availableYearKeys = years;
+
+  const headerRow = document.createElement("div");
+  headerRow.className = "payment-status-row payment-header-row";
+
+  const headerLabel = document.createElement("div");
+  headerLabel.className = "payment-status-label payment-header-label";
+  headerLabel.textContent = "Status Bayar";
+  headerRow.appendChild(headerLabel);
+
+  const headerActions = document.createElement("div");
+  headerActions.className = "payment-header-actions";
 
   const allChip = document.createElement("button");
   allChip.className = "chip chip-all active";
   allChip.textContent = "Semua";
   allChip.dataset.mode = "all";
   allChip.setAttribute("aria-pressed", "true");
-  chipGroupLunasEl.appendChild(allChip);
+  headerActions.appendChild(allChip);
+  headerRow.appendChild(headerActions);
+  paymentChipGroupEl.appendChild(headerRow);
 
-  const years = Object.keys(yearGroups).sort();
-  years.forEach(year => {
-    const lunasChip = document.createElement("button");
-    lunasChip.className = "chip";
-    lunasChip.textContent = `Lunas '${year}`;
-    lunasChip.dataset.year = year;
-    lunasChip.dataset.mode = "lunas";
-    lunasChip.setAttribute("aria-pressed", "false");
-    chipGroupLunasEl.appendChild(lunasChip);
+  const buildStatusRow = (statusKey, rowLabel) => {
+    const row = document.createElement("div");
+    row.className = "payment-status-row";
 
-    const belumLunasChip = document.createElement("button");
-    belumLunasChip.className = "chip";
-    belumLunasChip.textContent = `Belum Lunas '${year}`;
-    belumLunasChip.dataset.year = year;
-    belumLunasChip.dataset.mode = "belum-lunas";
-    belumLunasChip.setAttribute("aria-pressed", "false");
-    chipGroupLunasEl.appendChild(belumLunasChip);
-  });
+    const label = document.createElement("div");
+    label.className = "payment-status-label";
+    label.textContent = rowLabel;
+    row.appendChild(label);
 
-  chipGroupLunasEl.addEventListener("click", e => {
+    const chips = document.createElement("div");
+    chips.className = "payment-year-chips";
+
+    years.forEach(year => {
+      const chip = document.createElement("button");
+      chip.className = "chip";
+      chip.textContent = year;
+      chip.dataset.year = year;
+      chip.dataset.mode = statusKey;
+      chip.setAttribute("aria-pressed", "false");
+      chips.appendChild(chip);
+    });
+
+    row.appendChild(chips);
+    return row;
+  };
+
+  paymentChipGroupEl.appendChild(buildStatusRow("lunas", "Lunas"));
+  paymentChipGroupEl.appendChild(buildStatusRow("belum-lunas", "Belum Lunas"));
+
+  paymentChipGroupEl.addEventListener("click", e => {
     const chip = e.target.closest(".chip");
     if (!chip) return;
 
     if (chip.classList.contains("chip-all")) {
-      chipGroupLunasEl.querySelectorAll(".chip").forEach(c => {
+      paymentChipGroupEl.querySelectorAll(".chip").forEach(c => {
         c.classList.remove("active");
         c.setAttribute("aria-pressed", "false");
       });
       chip.classList.add("active");
       chip.setAttribute("aria-pressed", "true");
     } else {
-      chipGroupLunasEl.querySelector(".chip-all").classList.remove("active");
-      chipGroupLunasEl.querySelector(".chip-all").setAttribute("aria-pressed", "false");
+      paymentChipGroupEl.querySelector(".chip-all").classList.remove("active");
+      paymentChipGroupEl.querySelector(".chip-all").setAttribute("aria-pressed", "false");
       chip.classList.toggle("active");
       chip.setAttribute("aria-pressed", chip.classList.contains("active") ? "true" : "false");
 
-      const anyActive = [...chipGroupLunasEl.querySelectorAll(".chip:not(.chip-all)")]
+      const anyActive = [...paymentChipGroupEl.querySelectorAll(".chip:not(.chip-all)")]
         .some(c => c.classList.contains("active"));
       if (!anyActive) {
-        const all = chipGroupLunasEl.querySelector(".chip-all");
+        const all = paymentChipGroupEl.querySelector(".chip-all");
         all.classList.add("active");
         all.setAttribute("aria-pressed", "true");
       }
     }
-
     applyFilter();
   });
 }
@@ -469,15 +497,16 @@ function render(rows) {
 
   theadEl.appendChild(theadRow);
 
-  const SUMMARY_YEARS = [
-    { key: "s24", label: "'24", yearKey: "24", full: 2024 },
-    { key: "s25", label: "'25", yearKey: "25", full: 2025 },
-    { key: "s26", label: "'26", yearKey: "26", full: 2026 },
-  ];
+  summaryKeys = Object.keys(yearGroups).sort().map(yearKey => ({
+    key: `s${yearKey}`,
+    label: `'${yearKey}`,
+    yearKey,
+    full: parseInt(yearKey.length === 2 ? `20${yearKey}` : yearKey, 10)
+  }));
 
   const nomorThInDom = theadEl.querySelector(`[data-col="${identityColCount}"]`);
   if (nomorThInDom) {
-    [...SUMMARY_YEARS].reverse().forEach(({ key, label }) => {
+    [...summaryKeys].reverse().forEach(({ key, label }) => {
       const th = document.createElement("th");
       th.textContent = label;
       th.dataset.col = key;
@@ -529,7 +558,7 @@ function render(rows) {
     }
     const nomorTd = cellsByCol[identityColCount];
     if (nomorTd) {
-      [...SUMMARY_YEARS].reverse().forEach(({ key, yearKey, full }) => {
+      [...summaryKeys].reverse().forEach(({ key, yearKey, full }) => {
         const colIndices = yearGroups[yearKey] || [];
         const paidCount = colIndices.filter(idx => {
           const val = row[idx];
