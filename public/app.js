@@ -363,23 +363,16 @@ function buildLunasChips(yearGroups) {
   availableYearKeys = years;
 
   const headerRow = document.createElement("div");
-  headerRow.className = "payment-status-row payment-header-row";
+  // headerRow.className = "payment-status-row payment-header-row";
+
+  const headerStack = document.createElement("div");
+  headerStack.className = "payment-header-stack";
 
   const headerLabel = document.createElement("div");
   headerLabel.className = "payment-status-label payment-header-label";
   headerLabel.textContent = "Status Bayar";
-  headerRow.appendChild(headerLabel);
-
-  const headerActions = document.createElement("div");
-  headerActions.className = "payment-header-actions";
-
-  const allChip = document.createElement("button");
-  allChip.className = "chip chip-all active";
-  allChip.textContent = "Semua";
-  allChip.dataset.mode = "all";
-  allChip.setAttribute("aria-pressed", "true");
-  headerActions.appendChild(allChip);
-  headerRow.appendChild(headerActions);
+  headerStack.appendChild(headerLabel);
+  // headerRow.appendChild(headerStack);
   paymentChipGroupEl.appendChild(headerRow);
 
   const buildStatusRow = (statusKey, rowLabel) => {
@@ -414,28 +407,8 @@ function buildLunasChips(yearGroups) {
   paymentChipGroupEl.addEventListener("click", e => {
     const chip = e.target.closest(".chip");
     if (!chip) return;
-
-    if (chip.classList.contains("chip-all")) {
-      paymentChipGroupEl.querySelectorAll(".chip").forEach(c => {
-        c.classList.remove("active");
-        c.setAttribute("aria-pressed", "false");
-      });
-      chip.classList.add("active");
-      chip.setAttribute("aria-pressed", "true");
-    } else {
-      paymentChipGroupEl.querySelector(".chip-all").classList.remove("active");
-      paymentChipGroupEl.querySelector(".chip-all").setAttribute("aria-pressed", "false");
-      chip.classList.toggle("active");
-      chip.setAttribute("aria-pressed", chip.classList.contains("active") ? "true" : "false");
-
-      const anyActive = [...paymentChipGroupEl.querySelectorAll(".chip:not(.chip-all)")]
-        .some(c => c.classList.contains("active"));
-      if (!anyActive) {
-        const all = paymentChipGroupEl.querySelector(".chip-all");
-        all.classList.add("active");
-        all.setAttribute("aria-pressed", "true");
-      }
-    }
+    chip.classList.toggle("active");
+    chip.setAttribute("aria-pressed", chip.classList.contains("active") ? "true" : "false");
     applyFilter();
   });
 }
