@@ -451,19 +451,24 @@ function buildYearFilterChips() {
   if (!yearFilterGroupEl) return;
   yearFilterGroupEl.innerHTML = "";
 
+  const currentYearFull = new Date().getFullYear();
+  const currentYearKey = String(currentYearFull).slice(-2);
+  const hasCurrentYear = availableYearKeys.includes(currentYearKey);
+
   const allChip = document.createElement("button");
-  allChip.className = "chip chip-all active";
+  allChip.className = "chip chip-all" + (hasCurrentYear ? "" : " active");
   allChip.textContent = "Semua";
   allChip.dataset.year = "all";
-  allChip.setAttribute("aria-pressed", "true");
+  allChip.setAttribute("aria-pressed", hasCurrentYear ? "false" : "true");
   yearFilterGroupEl.appendChild(allChip);
 
   availableYearKeys.forEach(year => {
+    const isCurrent = hasCurrentYear && (year === currentYearKey);
     const chip = document.createElement("button");
-    chip.className = "chip";
+    chip.className = "chip" + (isCurrent ? " active" : "");
     chip.textContent = "20" + year;
     chip.dataset.year = year;
-    chip.setAttribute("aria-pressed", "false");
+    chip.setAttribute("aria-pressed", isCurrent ? "true" : "false");
     yearFilterGroupEl.appendChild(chip);
   });
 
