@@ -39,6 +39,7 @@ let blokShouldShow = false;   // whether filter state says Blok col should show
 let searchTerm = "";     // current normalised search string (lowercase, trimmed)
 let availableYearKeys = []; // dynamic list of year keys discovered from headers
 let summaryKeys = []; // dynamic list of summary column keys ('s24', 's25', ...)
+let yearGroups = {}; // dynamic mapping of yearKey -> array of header indices
 
 // ── HELPERS ──────────────────────────────────────────────────────────────
 
@@ -112,8 +113,13 @@ function applyStickyColumns() {
   });
 
   // Pin summary columns continuing the same leftPx offset
-  summaryKeys.forEach(({ key }, i) => {
-    const isLast = i === summaryKeys.length - 1;
+  const visibleSummaryKeys = summaryKeys.filter(({ key }) => {
+    const th = document.querySelector(`#thead [data-col="${key}"]`);
+    return th && !th.classList.contains("col-hidden");
+  });
+
+  visibleSummaryKeys.forEach(({ key }, i) => {
+    const isLast = i === visibleSummaryKeys.length - 1;
     const th = document.querySelector(`#thead [data-col="${key}"]`);
     if (!th) return;
     const width = th.getBoundingClientRect().width;
@@ -149,6 +155,27 @@ function updateColumnVisibility() {
     document.querySelectorAll(`[data-col="2"]`)
       .forEach(el => el.classList.toggle("col-hidden", isCollapsed));
   }
+
+  // Year columns visibility
+  const yearFilterChips = document.getElementById("year-filter-chips");
+  const activeYearChips = yearFilterChips ? [...yearFilterChips.querySelectorAll(".chip:not(.chip-all).active")] : [];
+  const isAllYears = activeYearChips.length === 0;
+  const selectedYears = new Set(activeYearChips.map(c => c.dataset.year));
+
+  availableYearKeys.forEach(yearKey => {
+    const show = isAllYears || selectedYears.has(yearKey);
+
+    // Hide/show summary column: key `s${yearKey}`
+    document.querySelectorAll(`[data-col="s${yearKey}"]`)
+      .forEach(el => el.classList.toggle("col-hidden", !show));
+
+    // Hide/show monthly columns: indices in yearGroups[yearKey]
+    const colIndices = yearGroups[yearKey] || [];
+    colIndices.forEach(colIdx => {
+      document.querySelectorAll(`[data-col="${colIdx}"]`)
+        .forEach(el => el.classList.toggle("col-hidden", !show));
+    });
+  });
 }
 
 // ── COLLAPSE / EXPAND ─────────────────────────────────────────────────────
@@ -418,6 +445,59 @@ function buildLunasChips(yearGroups) {
   });
 }
 
+// ── YEAR FILTER CHIPS ────────────────────────────────────────────────────
+function buildYearFilterChips() {
+  const yearFilterGroupEl = document.getElementById("year-filter-chips");
+  if (!yearFilterGroupEl) return;
+  yearFilterGroupEl.innerHTML = "";
+
+  const allChip = document.createElement("button");
+  allChip.className = "chip chip-all active";
+  allChip.textContent = "Semua";
+  allChip.dataset.year = "all";
+  allChip.setAttribute("aria-pressed", "true");
+  yearFilterGroupEl.appendChild(allChip);
+
+  availableYearKeys.forEach(year => {
+    const chip = document.createElement("button");
+    chip.className = "chip";
+    chip.textContent = "20" + year;
+    chip.dataset.year = year;
+    chip.setAttribute("aria-pressed", "false");
+    yearFilterGroupEl.appendChild(chip);
+  });
+
+  yearFilterGroupEl.addEventListener("click", e => {
+    const chip = e.target.closest(".chip");
+    if (!chip) return;
+
+    if (chip.classList.contains("chip-all")) {
+      yearFilterGroupEl.querySelectorAll(".chip").forEach(c => {
+        c.classList.remove("active");
+        c.setAttribute("aria-pressed", "false");
+      });
+      chip.classList.add("active");
+      chip.setAttribute("aria-pressed", "true");
+    } else {
+      yearFilterGroupEl.querySelector(".chip-all").classList.remove("active");
+      yearFilterGroupEl.querySelector(".chip-all").setAttribute("aria-pressed", "false");
+      chip.classList.toggle("active");
+      chip.setAttribute("aria-pressed", chip.classList.contains("active") ? "true" : "false");
+
+      const anyActive = [...yearFilterGroupEl.querySelectorAll(".chip:not(.chip-all)")]
+        .some(c => c.classList.contains("active"));
+      if (!anyActive) {
+        const all = yearFilterGroupEl.querySelector(".chip-all");
+        all.classList.add("active");
+        all.setAttribute("aria-pressed", "true");
+      }
+    }
+
+    updateColumnVisibility();
+    applyStickyColumns();
+  });
+}
+
 // ── RENDER ───────────────────────────────────────────────────────────────
 function render(rows) {
   if (!rows || rows.length === 0) {
@@ -430,7 +510,7 @@ function render(rows) {
   const identityColCount = hasNamaCol ? 3 : 2;
   CONFIG.STICKY_COLUMNS = hasNamaCol ? [1, 2, 3] : [1, 2];
 
-  const yearGroups = {}; 
+  yearGroups = {}; 
   headers.forEach((text, i) => {
     if (i <= identityColCount) return; 
     const match = text.match(/[- /](\d{2,4})$/);
@@ -570,6 +650,7 @@ function render(rows) {
   rowCountEl.textContent = (rows.length - 1) + " warga";
   buildFilterChips(rows);
   buildLunasChips(yearGroups);
+  buildYearFilterChips();
 
   requestAnimationFrame(() => {
     updateColumnVisibility();
