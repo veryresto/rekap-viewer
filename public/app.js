@@ -112,7 +112,7 @@ function applyStickyColumns() {
   });
 
   // Pin summary columns continuing the same leftPx offset
-  summaryKeys.forEach((key, i) => {
+  summaryKeys.forEach(({ key }, i) => {
     const isLast = i === summaryKeys.length - 1;
     const th = document.querySelector(`#thead [data-col="${key}"]`);
     if (!th) return;
