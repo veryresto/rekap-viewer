@@ -856,3 +856,47 @@ tbody tr:hover td.status-full-even { background-color: #4ade80 !important; }
     display: none !important;
   }
 }
+
+/* ── Portal Navigation Button ────────────────────────────── */
+.portal-btn {
+  font-size: 0.72rem;
+  background: transparent;
+  color: var(--th-text);
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  text-decoration: none;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s;
+  cursor: pointer;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.portal-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #fff;
+}
+
+.portal-btn svg {
+  flex-shrink: 0;
+  opacity: 0.85;
+  transition: opacity 0.15s;
+}
+
+.portal-btn:hover svg {
+  opacity: 1;
+}
+
+@media (max-width: 600px) {
+  .portal-btn span {
+    display: none; /* Hide text, show icon only on small screens */
+  }
+  .portal-btn {
+    padding: 6px 8px;
+  }
+}

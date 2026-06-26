@@ -726,6 +726,16 @@ async function fetchUser() {
     if (res.ok) {
       const user = await res.json();
       
+      // Configure and show portal button
+      const portalUrl = (window.location.hostname === 'rekap.localtest.me' || window.location.hostname === 'rekap.lvh.me' || window.location.hostname === 'localhost')
+        ? 'http://community.localtest.me:5173'
+        : 'https://community.veryresto.com';
+      const portalBtn = document.getElementById("portal-btn");
+      if (portalBtn) {
+        portalBtn.href = portalUrl;
+        portalBtn.style.display = "flex";
+      }
+      
       const initials = (user.name ? user.name.substring(0, 2) : user.email.substring(0, 2)).toUpperCase();
       document.getElementById("user-initials").textContent = initials;
       document.getElementById("user-initials-large").textContent = initials;
