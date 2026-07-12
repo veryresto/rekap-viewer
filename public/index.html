@@ -18,23 +18,29 @@
   <header class="app-header" role="banner">
     <div>
       <h1>📋 Rekap IPL</h1>
-      <div class="subtitle">Data melalui server Rekap Viewer</div>
       <div id="sync-time" class="sync-time" aria-live="polite"></div>
     </div>
     <div class="header-right">
       <span class="badge" id="row-count">Memuat…</span>
       <a href="#" id="portal-btn" class="portal-btn" style="display: none;" target="_blank" rel="noopener noreferrer">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="7" height="7" x="3" y="3" rx="1" />
+          <rect width="7" height="7" x="14" y="3" rx="1" />
+          <rect width="7" height="7" x="14" y="14" rx="1" />
+          <rect width="7" height="7" x="3" y="14" rx="1" />
+        </svg>
         <span>Portal</span>
       </a>
-      
+
       <div class="user-dropdown-container">
-        <button id="user-menu-btn" class="user-menu-btn" aria-expanded="false" aria-haspopup="true" aria-label="User menu">
+        <button id="user-menu-btn" class="user-menu-btn" aria-expanded="false" aria-haspopup="true"
+          aria-label="User menu">
           <div class="avatar" id="user-avatar-btn">
             <span id="user-initials">U</span>
           </div>
         </button>
-        
+
         <div id="user-dropdown" class="user-dropdown">
           <div class="user-dropdown-header">
             <div class="avatar avatar-large" id="user-avatar-large">
@@ -48,7 +54,12 @@
           </div>
           <div class="dropdown-separator"></div>
           <button id="sign-out-btn" class="dropdown-item text-destructive">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" x2="9" y1="12" y2="12"></line></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" x2="9" y1="12" y2="12"></line>
+            </svg>
             Sign out
           </button>
         </div>
@@ -67,20 +78,14 @@
       <div class="filter-main-row">
         <div class="search-wrap">
           <span class="search-icon" aria-hidden="true">⌕</span>
-          <input
-            id="search-input"
-            type="search"
-            class="search-input"
-            placeholder="Cari nomor…"
-            autocomplete="off"
-            spellcheck="false"
-            aria-label="Cari berdasarkan Nomor"
-          />
+          <input id="search-input" type="search" class="search-input" placeholder="Cari nomor…" autocomplete="off"
+            spellcheck="false" aria-label="Cari berdasarkan Nomor" />
           <button id="search-clear" class="search-clear" aria-label="Hapus pencarian" hidden>✕</button>
         </div>
 
-        <button id="filter-toggle-btn" class="filter-toggle-btn" aria-expanded="false" aria-controls="filter-collapse-content">
-          <span>Unit Blok</span>
+        <button id="filter-toggle-btn" class="filter-toggle-btn" aria-expanded="false"
+          aria-controls="filter-collapse-content">
+          <span>Filter</span>
           <span id="active-filter-count" class="filter-count-badge" hidden>0</span>
           <span class="toggle-arrow" aria-hidden="true">▾</span>
         </button>
@@ -96,7 +101,7 @@
           <div class="chip-group" id="payment-chips"></div>
         </div>
         <div class="filter-row">
-          <span class="filter-label">Pilih Tahun</span>
+          <span class="filter-label">Filter Tahun</span>
           <div class="chip-group" id="year-filter-chips"></div>
         </div>
       </div>
