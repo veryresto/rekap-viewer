@@ -728,8 +728,8 @@ async function fetchUser() {
       
       // Configure and show portal button
       const portalUrl = (window.location.hostname === 'rekap.localtest.me' || window.location.hostname === 'rekap.lvh.me' || window.location.hostname === 'localhost')
-        ? 'http://community.localtest.me:5173'
-        : 'https://community.veryresto.com';
+        ? 'http://portal.localtest.me:5173'
+        : 'https://portal.veryresto.com';
       const portalBtn = document.getElementById("portal-btn");
       if (portalBtn) {
         portalBtn.href = portalUrl;
@@ -877,8 +877,8 @@ function initUserDropdown() {
                     window.location.hostname === 'localhost';
     
     const portalUrl = isLocal 
-      ? 'http://community.localtest.me:5173'
-      : 'https://community.veryresto.com';
+      ? 'http://portal.localtest.me:5173'
+      : 'https://portal.veryresto.com';
       
     window.location.href = portalUrl;
   });

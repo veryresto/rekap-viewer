@@ -83,7 +83,7 @@ To validate the architecture, I benchmarked the app from multiple locations usin
      SHEET_ID=your_spreadsheet_id
      SUPABASE_URL=your_supabase_url
      SUPABASE_ANON_KEY=your_supabase_anon_key
-     PORTAL_URL=http://community.localtest.me:5137
+     PORTAL_URL=http://portal.localtest.me:5137
      PORT=3000
      ```
 

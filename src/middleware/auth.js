@@ -52,7 +52,7 @@ function handleAuthFailure(req, res) {
     
     if (!redirectUrl) {
         // Fallback to portal root if origin isn't allowed (auth failure)
-        return res.redirect(process.env.PORTAL_URL || 'https://community.veryresto.com');
+        return res.redirect(process.env.PORTAL_URL || 'https://portal.veryresto.com');
     }
     
     res.redirect(redirectUrl);

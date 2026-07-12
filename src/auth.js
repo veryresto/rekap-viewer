@@ -2,7 +2,7 @@ const { createClient } = require('@supabase/supabase-js');
 global.WebSocket = require('ws');
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
-const PORTAL_URL = process.env.PORTAL_URL || 'https://community.veryresto.com';
+const PORTAL_URL = process.env.PORTAL_URL || 'https://portal.veryresto.com';
 
 // Redirect Allowlist Validation
 const ALLOWED_RETURN_ORIGINS = [

@@ -46,7 +46,7 @@ User visits rekap.veryresto.com
         │
    ✗ No cookie / bad cookie / invalid JWT / expired token
         │
-        └──► 302 redirect → community.veryresto.com/?redirect_to=<url>
+        └──► 302 redirect → portal.veryresto.com/?redirect_to=<url>
              ("We don't know who you are — please sign in.")
         │
    ✓ Valid JWT → user identity confirmed
@@ -86,7 +86,7 @@ Clients can distinguish the two cases programmatically by status code, without p
 ## Open Questions
 
 > [!NOTE]
-> **Local development**: On `localhost`, the `veryresto-auth` cookie from the portal (`community.localtest.me:5173`) will be accessible if the app is run at `rekap.localtest.me:3000`. The plan includes a `DEV_BYPASS` env var to skip auth entirely on `localhost` for solo development without the portal running.
+> **Local development**: On `localhost`, the `veryresto-auth` cookie from the portal (`portal.localtest.me:5173`) will be accessible if the app is run at `rekap.localtest.me:3000`. The plan includes a `DEV_BYPASS` env var to skip auth entirely on `localhost` for solo development without the portal running.
 
 ---
 
@@ -145,7 +145,7 @@ module.exports = { extractSessionFromCookieHeader, verifyJwt, fetchApprovalStatu
 ```
 
 > [!NOTE]
-> The community platform (`community.veryresto.com`) already validates the **incoming** `redirect_to` on its side via `ALLOWED_ORIGINS` in `App.tsx`. This allowlist in `src/auth.js` is the **outgoing** validation — defence-in-depth against a forged `Host` header causing rekap-viewer to send users to an untrusted return URL.
+> The community platform (`portal.veryresto.com`) already validates the **incoming** `redirect_to` on its side via `ALLOWED_ORIGINS` in `App.tsx`. This allowlist in `src/auth.js` is the **outgoing** validation — defence-in-depth against a forged `Host` header causing rekap-viewer to send users to an untrusted return URL.
 
 #### [NEW] src/middleware/auth.js
 Express-specific. Imports from `src/auth.js` and handles all `req`/`res` logic. Knows about HTTP, headers, cookies, and redirect conventions. Auth utilities do not.
@@ -212,7 +212,7 @@ Served **only when the user is authenticated but not approved** — never for au
 | `suspended` | "Account suspended" | "Your account has been suspended. Please contact the community admin." |
 | _(default)_ | "Access denied" | Generic fallback. |
 
-The page must **not** offer a "Sign in" button (the user is already signed in). It should offer a "Back to Portal" link (`community.veryresto.com`) and possibly a "Sign out" link.
+The page must **not** offer a "Sign in" button (the user is already signed in). It should offer a "Back to Portal" link (`portal.veryresto.com`) and possibly a "Sign out" link.
 
 ---
 
@@ -223,7 +223,7 @@ Add:
 ```env
 SUPABASE_URL="https://your-supabase-project.supabase.co"
 SUPABASE_ANON_KEY="your-supabase-anon-key"
-PORTAL_URL="https://community.veryresto.com"
+PORTAL_URL="https://portal.veryresto.com"
 DEV_BYPASS_AUTH="false"   # set to "true" to skip auth on localhost
 ```
 
