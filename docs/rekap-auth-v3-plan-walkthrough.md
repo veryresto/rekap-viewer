@@ -43,7 +43,7 @@ The `.env` file now supports `DEV_BYPASS_AUTH=true`. Setting this bypasses the S
 
 ## Ecosystem Configuration
 
-The community platform (`community-platform/src/App.tsx`) has been updated. `http://rekap.localtest.me:3000` is now an allowed origin, permitting seamless local end-to-end testing between the portal and the rekap-viewer app.
+The community platform (`community-portal/src/App.tsx`) has been updated. `http://rekap.localtest.me:3000` is now an allowed origin, permitting seamless local end-to-end testing between the portal and the rekap-viewer app.
 
 ## Verification
 

@@ -286,7 +286,7 @@ None planned (consistent with existing project — no test suite).
 3. **API guard**: `curl http://rekap.localtest.me:3000/api/rekap` (no cookie) → confirm `401`.
 4. **Pending account**: Temporarily set a test user to `approval_status = 'pending'` → confirm denied page appears.
 5. **DEV_BYPASS**: Set `DEV_BYPASS_AUTH=true` in `.env`, run on `localhost:3000` → confirm data loads without cookie.
-6. **Portal allowlist**: Confirm `http://rekap.localtest.me:3000` and `https://rekap.veryresto.com` are in `community-platform/src/App.tsx` `ALLOWED_ORIGINS`.
+6. **Portal allowlist**: Confirm `http://rekap.localtest.me:3000` and `https://rekap.veryresto.com` are in `community-portal/src/App.tsx` `ALLOWED_ORIGINS`.
 
 ---
 
