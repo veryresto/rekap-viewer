@@ -17,7 +17,10 @@ A secure, high-performance web application to visualize IPL (Iuran Pemeliharaan 
 - **Sticky UI Layout**: 
   - Sticky table headers (top-frozen).
   - Sticky identity columns (Blok, Nomor) and Year Summary columns (frozen on horizontal scroll).
-- **Interactive Multi-Select Filters**: Filter payment status (e.g., "Lunas") per year with multi-select support, alongside mobile-optimized collapsible filter bars.
+- **Interactive Multi-Select Filters**: 
+  - Filter payment status (e.g., "Lunas") per year with multi-select support.
+  - Collapsible, mobile-optimized filter bars.
+  - **Pill/Typeahead House Number Filter**: Select multiple house numbers (Nomor) with live autocompletion, query matching highlights, and keyboard accessibility to compare specific units side-by-side. Free-text search falls back to Name/Nomor substring queries.
 - **Visual Analytics**: Instant calculation of yearly payment status with color-coded highlighting.
 
 ---
