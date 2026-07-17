@@ -884,6 +884,24 @@ function initUserDropdown() {
   });
 }
 
+async function fetchBuildInfo() {
+  try {
+    const res = await fetch("/generated/build-info.json");
+    if (res.ok) {
+      const buildInfo = await res.json();
+      const versionEl = document.getElementById("app-version");
+      if (versionEl && buildInfo.version) {
+        versionEl.textContent = `v${buildInfo.version}`;
+        versionEl.title = `Branch: ${buildInfo.gitBranch}\nCommit: ${buildInfo.gitCommitSha}\nBuilt: ${new Date(buildInfo.buildTimestamp).toLocaleString()}\nEnv: ${buildInfo.environment}`;
+        versionEl.style.display = "inline";
+      }
+    }
+  } catch (err) {
+    console.error("[rekap] Build info error:", err);
+  }
+}
+
 fetchUser();
 initUserDropdown();
 loadData();
+fetchBuildInfo();
