@@ -61,6 +61,19 @@ body {
   font-weight: 700;
   letter-spacing: -0.01em;
   color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-version {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: help;
 }
 
 .app-header .subtitle {

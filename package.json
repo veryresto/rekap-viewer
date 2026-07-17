@@ -4,7 +4,10 @@
   "description": "A premium, mobile-friendly web application to visualize IPL (Iuran Pemeliharaan Lingkungan) payment data directly from Google Sheets. Built with pure HTML/CSS/JS for maximum performance and zero dependencies.",
   "main": "src/server.js",
   "scripts": {
+    "prestart": "node scripts/generate-build-info.js",
     "start": "node src/server.js",
+    "predev": "node scripts/generate-build-info.js development",
+    "dev": "node src/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
