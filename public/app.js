@@ -211,8 +211,8 @@ function applyFilter() {
   const nomorColIdx = hasNamaCol ? 3 : 2;
 
   document.querySelectorAll("#tbody tr").forEach(tr => {
-    const blokCell  = tr.querySelector(`[data-col="1"]`);
-    const blokVal   = blokCell ? blokCell.textContent.trim() : "";
+    const blokCell = tr.querySelector(`[data-col="1"]`);
+    const blokVal = blokCell ? blokCell.textContent.trim() : "";
     const nomorText = tr.querySelector(`[data-col="${nomorColIdx}"]`)?.textContent.trim().toLowerCase() ?? "";
     const namaText = hasNamaCol ? (tr.querySelector(`[data-col="2"]`)?.textContent.trim().toLowerCase() ?? "") : "";
 
@@ -239,7 +239,7 @@ function applyFilter() {
       });
     }
 
-    const matchesBlok   = isSemua || selectedBloks.has(blokVal);
+    const matchesBlok = isSemua || selectedBloks.has(blokVal);
     const matchesSearch = selectedNomors.size > 0
       ? selectedNomors.has(nomorText.toUpperCase())
       : (!searchTerm
@@ -330,7 +330,7 @@ function initSearch() {
       const li = document.createElement("li");
       li.setAttribute("role", "option");
       li.setAttribute("id", `opt-${index}`);
-      
+
       // Highlight matching prefix/substring
       const queryIdx = item.toLowerCase().indexOf(query.toLowerCase());
       if (queryIdx >= 0) {
@@ -708,13 +708,13 @@ function render(rows) {
   });
   nomorIndex = Array.from(nomorSet).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
 
-  yearGroups = {}; 
+  yearGroups = {};
   headers.forEach((text, i) => {
-    if (i <= identityColCount) return; 
+    if (i <= identityColCount) return;
     const match = text.match(/[- /](\d{2,4})$/);
     if (match) {
       const year = match[1];
-      const yearKey = year.length === 4 ? year.slice(-2) : year; 
+      const yearKey = year.length === 4 ? year.slice(-2) : year;
       if (!yearGroups[yearKey]) yearGroups[yearKey] = [];
       yearGroups[yearKey].push(i);
     }
@@ -722,7 +722,7 @@ function render(rows) {
 
   const theadRow = document.createElement("tr");
   headers.forEach((text, i) => {
-    if (i === 0) return; 
+    if (i === 0) return;
     const th = document.createElement("th");
     th.textContent = text;
     th.dataset.col = i;
@@ -781,9 +781,9 @@ function render(rows) {
       normalizedRow.push("");
     }
 
-    const cellsByCol = {}; 
+    const cellsByCol = {};
     normalizedRow.forEach((val, i) => {
-      if (i === 0) return; 
+      if (i === 0) return;
       const td = document.createElement("td");
       td.textContent = cellDisplay(val);
       td.dataset.col = i;
@@ -876,7 +876,7 @@ function displaySyncTime(isoString) {
     const year = d.getFullYear();
     const hours = String(d.getHours()).padStart(2, '0');
     const minutes = String(d.getMinutes()).padStart(2, '0');
-    syncTimeEl.textContent = `Sinkronisasi terakhir: ${day} ${month} ${year} ${hours}:${minutes}`;
+    syncTimeEl.textContent = `Synced at: ${day} ${month} ${year} ${hours}:${minutes}`;
   } catch (e) {
     console.error("[rekap] Error formatting sync time:", e);
     syncTimeEl.textContent = "";
@@ -918,7 +918,7 @@ async function fetchUser() {
     const res = await fetch("/api/me");
     if (res.ok) {
       const user = await res.json();
-      
+
       // Configure and show portal button
       const portalUrl = (window.location.hostname === 'rekap.localtest.me' || window.location.hostname === 'rekap.lvh.me' || window.location.hostname === 'localhost')
         ? 'http://portal.localtest.me:5173'
@@ -928,14 +928,14 @@ async function fetchUser() {
         portalBtn.href = portalUrl;
         portalBtn.style.display = "flex";
       }
-      
+
       const initials = (user.name ? user.name.substring(0, 2) : user.email.substring(0, 2)).toUpperCase();
       document.getElementById("user-initials").textContent = initials;
       document.getElementById("user-initials-large").textContent = initials;
-      
+
       document.getElementById("user-name").textContent = user.name || user.email;
       document.getElementById("user-email").textContent = user.email;
-      
+
       if (user.avatar_url) {
         document.getElementById("user-avatar-btn").innerHTML = `<img src="${user.avatar_url}" alt="Avatar" />`;
         document.getElementById("user-avatar-large").innerHTML = `<img src="${user.avatar_url}" alt="Avatar" />`;
@@ -943,7 +943,7 @@ async function fetchUser() {
 
       const tagsContainer = document.getElementById("user-tags");
       const headerTagsContainer = document.getElementById("header-tags");
-      
+
       if (tagsContainer) {
         tagsContainer.innerHTML = "";
       }
@@ -956,10 +956,10 @@ async function fetchUser() {
         const type = user.profile.participant_type;
         const subtype = user.profile.resident_subtype;
         const affiliation = user.profile.requested_affiliation;
-        
+
         let profileLabel = "";
         let profileClass = "";
-        
+
         if (type === "resident") {
           profileClass = "tag-resident";
           if (subtype === "owner") {
@@ -983,7 +983,7 @@ async function fetchUser() {
             profileLabel = "Non-Warga";
           }
         }
-        
+
         if (profileLabel) {
           const badge = document.createElement("span");
           badge.className = `tag-badge ${profileClass}`;
@@ -997,7 +997,7 @@ async function fetchUser() {
         user.roles.forEach(role => {
           let roleLabel = "";
           let roleClass = "";
-          
+
           if (role === "admin") {
             roleLabel = "Global Admin";
             roleClass = "tag-admin";
@@ -1008,7 +1008,7 @@ async function fetchUser() {
             roleLabel = "Moderator";
             roleClass = "tag-moderator";
           }
-          
+
           if (roleLabel) {
             // Dropdown tag
             if (tagsContainer) {
@@ -1017,7 +1017,7 @@ async function fetchUser() {
               badge.textContent = roleLabel;
               tagsContainer.appendChild(badge);
             }
-            
+
             // Header tag
             if (headerTagsContainer) {
               const badge = document.createElement("span");
@@ -1039,23 +1039,23 @@ function initUserDropdown() {
   const btn = document.getElementById("user-menu-btn");
   const dropdown = document.getElementById("user-dropdown");
   const signoutBtn = document.getElementById("sign-out-btn");
-  
+
   if (!btn || !dropdown) return;
-  
+
   btn.addEventListener("click", (e) => {
     e.stopPropagation();
     const isExpanded = btn.getAttribute("aria-expanded") === "true";
     btn.setAttribute("aria-expanded", !isExpanded);
     dropdown.classList.toggle("show");
   });
-  
+
   document.addEventListener("click", (e) => {
     if (!dropdown.contains(e.target) && e.target !== btn) {
       dropdown.classList.remove("show");
       btn.setAttribute("aria-expanded", "false");
     }
   });
-  
+
   signoutBtn.addEventListener("click", async () => {
     try {
       // Call the backend endpoint to log out globally from Supabase and clear the cookie
@@ -1063,16 +1063,16 @@ function initUserDropdown() {
     } catch (e) {
       console.error('Logout request failed:', e);
     }
-    
+
     // Determine the portal URL based on the environment
-    const isLocal = window.location.hostname.endsWith('.localtest.me') || 
-                    window.location.hostname.endsWith('.lvh.me') || 
-                    window.location.hostname === 'localhost';
-    
-    const portalUrl = isLocal 
+    const isLocal = window.location.hostname.endsWith('.localtest.me') ||
+      window.location.hostname.endsWith('.lvh.me') ||
+      window.location.hostname === 'localhost';
+
+    const portalUrl = isLocal
       ? 'http://portal.localtest.me:5173'
       : 'https://portal.veryresto.com';
-      
+
     window.location.href = portalUrl;
   });
 }
