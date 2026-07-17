@@ -37,6 +37,8 @@ let isCollapsed = false;   // whether Nama/Blok are hidden by user toggle
 let toggleBtn = null;    // the ◀/▶ button element
 let blokShouldShow = false;   // whether filter state says Blok col should show
 let searchTerm = "";     // current normalised search string (lowercase, trimmed)
+let selectedNomors = new Set(); // set of selected house numbers (pills)
+let nomorIndex = [];     // dynamic list of all unique house numbers
 let availableYearKeys = []; // dynamic list of year keys discovered from headers
 let summaryKeys = []; // dynamic list of summary column keys ('s24', 's25', ...)
 let yearGroups = {}; // dynamic mapping of yearKey -> array of header indices
@@ -238,9 +240,11 @@ function applyFilter() {
     }
 
     const matchesBlok   = isSemua || selectedBloks.has(blokVal);
-    const matchesSearch = !searchTerm
-      || nomorText.includes(searchTerm)
-      || (hasNamaCol && namaText.includes(searchTerm));
+    const matchesSearch = selectedNomors.size > 0
+      ? selectedNomors.has(nomorText.toUpperCase())
+      : (!searchTerm
+        || nomorText.includes(searchTerm)
+        || (hasNamaCol && namaText.includes(searchTerm)));
     const show = matchesBlok && matchesSearch && matchesPayment;
     tr.classList.toggle("row-hidden", !show);
     if (show) visibleCount++;
@@ -267,37 +271,218 @@ function applyFilter() {
   }
 }
 
-// ── SEARCH ───────────────────────────────────────────────────────────────
+// ── SEARCH (PILL MULTI-SELECT) ───────────────────────────────────────────
 function initSearch() {
-  const input    = document.getElementById("search-input");
+  const wrap = document.getElementById("pill-input-wrap");
+  const input = document.getElementById("search-input");
   const clearBtn = document.getElementById("search-clear");
-  if (!input) return;
+  const pillList = document.getElementById("pill-list");
+  const suggestionsList = document.getElementById("nomor-suggestions");
+  if (!input || !suggestionsList || !pillList) return;
+
+  let activeIndex = -1;
+  let currentMatches = [];
+
+  const updatePillsUI = () => {
+    pillList.innerHTML = "";
+    selectedNomors.forEach(nomor => {
+      const tag = document.createElement("div");
+      tag.className = "pill-tag";
+      tag.textContent = nomor;
+
+      const removeBtn = document.createElement("button");
+      removeBtn.className = "pill-tag__remove";
+      removeBtn.innerHTML = "×";
+      removeBtn.setAttribute("aria-label", `Hapus filter ${nomor}`);
+      removeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        selectedNomors.delete(nomor);
+        updatePillsUI();
+        applyFilter();
+        input.focus();
+      });
+
+      tag.appendChild(removeBtn);
+      pillList.appendChild(tag);
+    });
+
+    // Update input placeholder and visibility of clear button
+    if (selectedNomors.size > 0) {
+      input.placeholder = "Tambah nomor lain…";
+      clearBtn.hidden = false;
+    } else {
+      input.placeholder = "Cari nomor atau nama…";
+      clearBtn.hidden = !input.value.trim();
+    }
+  };
+
+  const renderSuggestions = (matches, query) => {
+    suggestionsList.innerHTML = "";
+    currentMatches = matches;
+    activeIndex = -1;
+
+    if (matches.length === 0) {
+      suggestionsList.hidden = true;
+      return;
+    }
+
+    matches.forEach((item, index) => {
+      const li = document.createElement("li");
+      li.setAttribute("role", "option");
+      li.setAttribute("id", `opt-${index}`);
+      
+      // Highlight matching prefix/substring
+      const queryIdx = item.toLowerCase().indexOf(query.toLowerCase());
+      if (queryIdx >= 0) {
+        const before = item.substring(0, queryIdx);
+        const match = item.substring(queryIdx, queryIdx + query.length);
+        const after = item.substring(queryIdx + query.length);
+        li.innerHTML = `${before}<mark>${match}</mark>${after}`;
+      } else {
+        li.textContent = item;
+      }
+
+      li.addEventListener("click", () => {
+        selectNomor(item);
+      });
+      suggestionsList.appendChild(li);
+    });
+
+    suggestionsList.hidden = false;
+  };
+
+  const selectNomor = (nomor) => {
+    selectedNomors.add(nomor.toUpperCase());
+    input.value = "";
+    searchTerm = "";
+    suggestionsList.hidden = true;
+    updatePillsUI();
+    applyFilter();
+    input.focus();
+
+    analytics.track('filter_selected', {
+      filter_type: 'nomor',
+      value: nomor
+    });
+  };
+
+  const handleArrowKeys = (e) => {
+    if (suggestionsList.hidden) return;
+    const items = suggestionsList.querySelectorAll("li");
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      activeIndex = (activeIndex + 1) % items.length;
+      highlightItem(items);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      activeIndex = (activeIndex - 1 + items.length) % items.length;
+      highlightItem(items);
+    } else if (e.key === "Enter") {
+      if (activeIndex >= 0 && activeIndex < items.length) {
+        e.preventDefault();
+        selectNomor(currentMatches[activeIndex]);
+      }
+    } else if (e.key === "Escape") {
+      suggestionsList.hidden = true;
+    }
+  };
+
+  const highlightItem = (items) => {
+    items.forEach((item, idx) => {
+      const active = idx === activeIndex;
+      item.classList.toggle("active", active);
+      if (active) {
+        item.setAttribute("aria-selected", "true");
+        // Ensure scroll into view
+        item.scrollIntoView({ block: "nearest" });
+      } else {
+        item.removeAttribute("aria-selected");
+      }
+    });
+  };
 
   let debounceTimer;
   let analyticsTimer;
+
   input.addEventListener("input", () => {
+    const rawVal = input.value;
+    const val = rawVal.trim().toLowerCase();
+
+    // Toggle clear button
+    clearBtn.hidden = !(val || selectedNomors.size > 0);
+
+    // Show suggestions only for non-empty input
+    if (!val) {
+      suggestionsList.hidden = true;
+      searchTerm = "";
+      applyFilter();
+      return;
+    }
+
+    // Filter index for prefix matches first, then general includes
+    const filtered = nomorIndex.filter(item => {
+      const lower = item.toLowerCase();
+      return lower.includes(val) && !selectedNomors.has(item.toUpperCase());
+    });
+
+    // Sort: exact matches first, prefix matches next, then the rest
+    filtered.sort((a, b) => {
+      const aLower = a.toLowerCase();
+      const bLower = b.toLowerCase();
+      const aPrefix = aLower.startsWith(val);
+      const bPrefix = bLower.startsWith(val);
+      if (aPrefix && !bPrefix) return -1;
+      if (!aPrefix && bPrefix) return 1;
+      return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+    });
+
+    renderSuggestions(filtered.slice(0, 8), val);
+
+    // Update search query for free-text fallback
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
-      searchTerm = input.value.trim().toLowerCase();
-      clearBtn.hidden = !searchTerm;
+      searchTerm = val;
       applyFilter();
     }, 200);
 
     clearTimeout(analyticsTimer);
     analyticsTimer = setTimeout(() => {
-      const query = input.value.trim().toLowerCase();
-      if (query && query.length >= 2) {
+      if (val.length >= 2) {
         analytics.track('search_performed', {
-          query_length: query.length
+          query_length: val.length
         });
       }
     }, 500);
   });
 
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Backspace" && !input.value && selectedNomors.size > 0) {
+      // Remove last tag
+      const arr = Array.from(selectedNomors);
+      const last = arr[arr.length - 1];
+      selectedNomors.delete(last);
+      updatePillsUI();
+      applyFilter();
+      return;
+    }
+    handleArrowKeys(e);
+  });
+
+  // Close suggestions when clicking outside
+  document.addEventListener("click", (e) => {
+    if (!wrap.contains(e.target)) {
+      suggestionsList.hidden = true;
+    }
+  });
+
   clearBtn.addEventListener("click", () => {
     input.value = "";
     searchTerm = "";
+    selectedNomors.clear();
+    suggestionsList.hidden = true;
     clearBtn.hidden = true;
+    updatePillsUI();
     input.focus();
     applyFilter();
   });
@@ -514,6 +699,14 @@ function render(rows) {
   const hasNamaCol = headers.some(cell => typeof cell === 'string' && cell.trim() === 'Nama');
   const identityColCount = hasNamaCol ? 3 : 2;
   CONFIG.STICKY_COLUMNS = hasNamaCol ? [1, 2, 3] : [1, 2];
+
+  // Extract all unique house numbers (Nomor) from rows
+  const nomorSet = new Set();
+  rows.slice(1).forEach(row => {
+    const val = cellDisplay(row[identityColCount]);
+    if (val) nomorSet.add(val.toUpperCase());
+  });
+  nomorIndex = Array.from(nomorSet).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
 
   yearGroups = {}; 
   headers.forEach((text, i) => {

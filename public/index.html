@@ -76,11 +76,13 @@
 
     <div class="filter-bar" id="filter-bar" role="search" aria-label="Filter berdasarkan Blok atau cari nomor">
       <div class="filter-main-row">
-        <div class="search-wrap">
+        <div class="pill-input-wrap" id="pill-input-wrap">
           <span class="search-icon" aria-hidden="true">⌕</span>
-          <input id="search-input" type="search" class="search-input" placeholder="Cari nomor…" autocomplete="off"
-            spellcheck="false" aria-label="Cari berdasarkan Nomor" />
+          <div class="pill-list" id="pill-list"></div>
+          <input id="search-input" type="text" class="search-input pill-text-input" placeholder="Cari nomor atau nama…" autocomplete="off"
+            spellcheck="false" aria-label="Cari berdasarkan Nomor atau Nama" aria-autocomplete="list" aria-controls="nomor-suggestions" />
           <button id="search-clear" class="search-clear" aria-label="Hapus pencarian" hidden>✕</button>
+          <ul id="nomor-suggestions" class="nomor-dropdown" role="listbox" hidden></ul>
         </div>
 
         <button id="filter-toggle-btn" class="filter-toggle-btn" aria-expanded="false"

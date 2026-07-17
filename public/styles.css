@@ -623,6 +623,121 @@ thead th.has-toggle {
 @media (max-width: 600px) {
   .filter-divider { display: none; }
   .search-wrap { max-width: 100%; flex-basis: 100%; min-width: 0; }
+  .pill-input-wrap { max-width: 100% !important; flex-basis: 100%; min-width: 0; }
+}
+
+/* ── Pill Multi-Select Input ── */
+.pill-input-wrap {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 18px;
+  padding: 4px 10px;
+  flex: 1;
+  min-width: 170px;
+  max-width: 320px;
+  position: relative;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.pill-input-wrap:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.pill-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.pill-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 999px;
+  line-height: 1.2;
+}
+
+.pill-tag__remove {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  font-size: 0.65rem;
+  padding: 0 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  width: 14px;
+  height: 14px;
+  transition: background 0.1s, color 0.1s;
+}
+
+.pill-tag__remove:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.pill-text-input {
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.78rem;
+  color: var(--text);
+  outline: none;
+  flex: 1;
+  min-width: 80px;
+  padding: 2px 0;
+}
+
+/* ── Suggestions Dropdown ── */
+.nomor-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 14px; /* Align with search icon */
+  width: calc(100% - 28px);
+  max-width: 280px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  z-index: 200;
+  list-style: none;
+  padding: 4px 0;
+  margin: 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.nomor-dropdown li {
+  padding: 6px 12px;
+  font-size: 0.78rem;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.nomor-dropdown li:hover,
+.nomor-dropdown li.active {
+  background: var(--row-hover);
+  color: var(--accent);
+}
+
+.nomor-dropdown li mark {
+  background: transparent;
+  color: var(--accent);
+  font-weight: 700;
 }
 
 /* ── Summary Columns ('24 / '25 / '26) ───────────────────── */
