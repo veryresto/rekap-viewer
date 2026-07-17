@@ -27,6 +27,16 @@ RUN npm ci
 # Copy application code
 COPY . .
 
+# Accept Git Commit SHA, Branch, and Version at build-time
+ARG VITE_GIT_SHA
+ARG VITE_GIT_BRANCH
+ARG VITE_APP_VERSION
+ENV VITE_GIT_SHA=$VITE_GIT_SHA
+ENV VITE_GIT_BRANCH=$VITE_GIT_BRANCH
+ENV VITE_APP_VERSION=$VITE_APP_VERSION
+
+# Generate build-info at build time
+RUN node scripts/generate-build-info.js production
 
 # Final stage for app image
 FROM base
@@ -34,6 +44,6 @@ FROM base
 # Copy built application
 COPY --from=build /app /app
 
-# Start the server by default, this can be overwritten at runtime
+# Start the server directly to bypass prestart runtime regeneration
 EXPOSE 3000
-CMD [ "npm", "run", "start" ]
+CMD [ "node", "src/server.js" ]
