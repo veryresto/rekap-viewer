@@ -1,4 +1,5 @@
-require('dotenv').config();
+const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env';
+require('dotenv').config({ path: envFile });
 const express = require('express');
 const path = require('path');
 const { uploadCache, readCache } = require('./storage');

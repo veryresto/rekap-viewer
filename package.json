@@ -8,8 +8,11 @@
     "start": "node src/server.js",
     "predev": "node scripts/generate-build-info.js development",
     "dev": "node src/server.js",
+    "dev:staging": "NODE_ENV=development npm run predev && node src/server.js",
+    "dev:prod": "NODE_ENV=production npm run predev && node src/server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "deploy": "fly deploy --build-arg VITE_GIT_SHA=$(git rev-parse HEAD) --build-arg VITE_GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD) --build-arg VITE_APP_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo '')"
+    "deploy:staging": "fly deploy --build-arg VITE_GIT_SHA=$(git rev-parse HEAD) --build-arg VITE_GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD) --build-arg VITE_APP_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo '')",
+    "deploy:prod": "fly deploy -c fly.production.toml --build-arg VITE_GIT_SHA=$(git rev-parse HEAD) --build-arg VITE_GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD) --build-arg VITE_APP_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo '')"
   },
   "keywords": [],
   "author": "",

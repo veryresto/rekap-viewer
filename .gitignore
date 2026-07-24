@@ -4,6 +4,8 @@ package-lock.json
 
 # Environment variables
 .env
+.env.production
+.env.staging
 
 # Configuration
 config.js
