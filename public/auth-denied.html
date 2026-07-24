@@ -56,7 +56,7 @@
   <div class="denied-card">
     <h2 id="title">Akses Ditolak</h2>
     <p id="message">Memuat informasi...</p>
-    <a href="https://portal.veryresto.com" class="btn" target="_blank" rel="noopener noreferrer">Kembali ke Portal</a>
+    <a href="https://portal.veryresto.com" id="back-to-portal" class="btn" target="_blank" rel="noopener noreferrer">Kembali ke Portal</a>
   </div>
 
   <script>
@@ -65,6 +65,19 @@
     
     const titleEl = document.getElementById('title');
     const msgEl = document.getElementById('message');
+    
+    // Determine the portal URL based on the environment
+    const isLocal = window.location.hostname.endsWith('.localtest.me') ||
+      window.location.hostname.endsWith('.lvh.me') ||
+      window.location.hostname === 'localhost';
+
+    const portalUrl = isLocal
+      ? 'http://portal.localtest.me:5173'
+      : window.location.hostname.endsWith('.sakura3.id')
+      ? 'https://portal.sakura3.id'
+      : 'https://portal.veryresto.com';
+
+    document.getElementById('back-to-portal').href = portalUrl;
     
     if (reason === 'pending') {
         titleEl.textContent = 'Menunggu Persetujuan';

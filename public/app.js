@@ -922,6 +922,8 @@ async function fetchUser() {
       // Configure and show portal button
       const portalUrl = (window.location.hostname === 'rekap.localtest.me' || window.location.hostname === 'rekap.lvh.me' || window.location.hostname === 'localhost')
         ? 'http://portal.localtest.me:5173'
+        : window.location.hostname.endsWith('.sakura3.id')
+        ? 'https://portal.sakura3.id'
         : 'https://portal.veryresto.com';
       const portalBtn = document.getElementById("portal-btn");
       if (portalBtn) {
@@ -1071,6 +1073,8 @@ function initUserDropdown() {
 
     const portalUrl = isLocal
       ? 'http://portal.localtest.me:5173'
+      : window.location.hostname.endsWith('.sakura3.id')
+      ? 'https://portal.sakura3.id'
       : 'https://portal.veryresto.com';
 
     window.location.href = portalUrl;

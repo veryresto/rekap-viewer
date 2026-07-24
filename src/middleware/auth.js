@@ -52,7 +52,18 @@ function handleAuthFailure(req, res) {
     
     if (!redirectUrl) {
         // Fallback to portal root if origin isn't allowed (auth failure)
-        return res.redirect(process.env.PORTAL_URL || 'https://portal.veryresto.com');
+        let portal = process.env.PORTAL_URL;
+        if (!portal) {
+            const host = req.get('host') || '';
+            if (host.endsWith('.sakura3.id')) {
+                portal = 'https://portal.sakura3.id';
+            } else if (host.endsWith('.localtest.me')) {
+                portal = 'http://portal.localtest.me:5173';
+            } else {
+                portal = 'https://portal.veryresto.com';
+            }
+        }
+        return res.redirect(portal);
     }
     
     res.redirect(redirectUrl);

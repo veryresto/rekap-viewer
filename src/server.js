@@ -78,16 +78,16 @@ app.post('/api/analytics', express.json(), requireAuth, requireApprovedResident,
 app.post('/api/logout', async (req, res) => {
     const cookieHeader = req.headers.cookie;
     const session = extractSessionFromCookieHeader(cookieHeader);
-    
+
     if (session && session.access_token) {
         await globalLogout(session.access_token);
     }
-    
+
     const hostname = req.hostname;
-    const domain = hostname.endsWith('.localtest.me') ? '.localtest.me' : 
-                   hostname.endsWith('.veryresto.com') ? '.veryresto.com' : hostname;
-    
-    res.clearCookie('veryresto-auth', { domain: domain, path: '/' });
+    const domain = hostname.endsWith('.localtest.me') ? '.localtest.me' :
+        hostname.endsWith('.sakura3.id') ? '.sakura3.id' : hostname;
+
+    res.clearCookie('sakura3-auth', { domain: domain, path: '/' });
     res.json({ success: true });
 });
 
@@ -104,7 +104,7 @@ async function fetchGoogleSheetsData() {
     }
 
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(RANGE)}?valueRenderOption=FORMATTED_VALUE&dateTimeRenderOption=FORMATTED_STRING&key=${GOOGLE_API_KEY}`;
-    
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout for refresh
 
@@ -155,7 +155,7 @@ async function refreshCache() {
 app.get('/api/rekap', requireAuth, requireApprovedResident, async (req, res) => {
     try {
         const cache = await readCache();
-        
+
         if (!cache) {
             console.error('Cache not found in storage');
             return res.status(404).json({ error: 'Data not available yet. Please try again in a few minutes.' });
